@@ -23,28 +23,13 @@ function getShortestDist(m, n, startX, startY, ball) {
   }
 
   //두 공의 좌표가 모두 다른 경우
-  const candidate = [];
-  //4군데 다 생각해야 함
-  //남쪽으로 치는 경우
-  //동쪽으로 치는 경우
-  //북쪽으로 치는 경우
-  //서쪽으로 친느 경우
-
-  //하나만 생각하면
-  //탄젠트 값 구한다
-  //한쪽 삼각형의 높이를 구한다
-  //그 높이와 밑변의 길이 통해서 빗변의 길이를 구한다.
-  const southXDist = Math.abs(startX - ball[0]);
-  const tan1 = southXDist / (startY + ball[1]);
-  const h1 = tan1 * startY;
-  const t1 = calcDistForSIngleTriangle(h1, startY);
-  const h2 = tan1 * ball[1];
-  const t2 = calcDistForSIngleTriangle(h2, ball[1]);
-  Math.pow(t1 + t2, 2);
-
-  //동쪽
-  const eastYDist = Math.abs(startY - ball[1]);
-  const tan2 = eastYDist / (m - startX + m - ball[1]);
+  const candidate = [
+    calcDist2(Math.abs(startX - ball[0]), startY, ball[1]), //남
+    calcDist2(Math.abs(startY - ball[1]), m - startX, m - ball[0]), //동
+    calcDist2(Math.abs(startX - ball[0]), n - startY, n - ball[1]), //북
+    calcDist2(Math.abs(startY - ball[1]), startX, ball[0]), //서
+  ];
+  return Math.min(...candidate);
 }
 
 function calcDist(height, width) {
@@ -55,11 +40,17 @@ function calcDistForSIngleTriangle(height, width) {
   return Math.sqrt(height * height + width * width);
 }
 
-//문제 분석
+function calcDist2(widthDist, theight1, theight2) {
+  const tan2 = widthDist / (theight1 + theight2);
+  const h1 = tan2 * theight1;
+  const t1 = calcDistForSIngleTriangle(h1, theight1);
+  const h2 = tan2 * theight2;
+  const t2 = calcDistForSIngleTriangle(h2, theight2);
+  return Math.pow(t1 + t2, 2);
+}
 
-//벽에 한번은 맞아야 함
-//입사각 반사각 동일하다
-
-//공1 출발
-
-//공2 도착
+solution(10, 10, 3, 7, [
+  [7, 7],
+  [2, 7],
+  [7, 3],
+]);
