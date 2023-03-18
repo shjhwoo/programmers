@@ -1,55 +1,71 @@
-function solution(maps) {
-  //출발점: S
-  //도착점: E
-  //레버: L
-  const src = getXYPosition(maps, "S");
-  const dst = getXYPosition(maps, "E");
-  console.log("출발 및 도착지점", src, dst);
-  return getShortestDist(maps, src, dst);
-}
+//최소한의 이동거리를 구하려면 가장 경계점에 있는 파일이 무엇인지를 알아야 한다
+//가장 위 - 가장 왼쪽에 있는 파일 하나.
+//가장 아래- 가장 오른쪽에 있는 파일 하나.
 
-function getXYPosition(maps, name) {
-  const Y = maps.findIndex((road) => road.includes(name));
-  const X = maps[Y].indexOf(name);
-  return [X, Y];
-}
+//특이 케이스: 파일이 하나뿐인 경우: 바로 처리할 수 있다
 
-function getShortestDist(maps, src, dst) {
-  const up = [-1, 0];
-  const right = [0, 1];
-  const down = [1, 0];
-  const left = [0, -1];
-  const direction = [up, right, down, left];
+function solution(wallpaper) {
+  //파일이 단 하나뿐인 경우
+  if (wallpaper.join("").match(/#/g)?.length === 1) {
+    //파일의 XY 좌표 구하기
+    const fileY = wallpaper.findIndex((line) => line.includes("#"));
+    const fileX = wallpaper[fileY].split("").findIndex((ch) => ch === "#");
 
-  const isValid = (a, b) =>
-    a >= 0 && b >= 0 && a < maps[0].length && b < maps.length;
-
-  //방문여부 저장할 객체
-  const visited = {};
-  visited[src] = true;
-  const queue = [[src, 0]];
-  while (queue.length) {
-    const [spot, dist] = queue.shift();
-    //해당 지점에서 4방향 모두 검사해서 최단거리가 있을지 확인해야 한다
-    //포인트는 반복문을 돌면서 원본의 값이 항상 같아야 한다는 것이다.
-    for (let d = 0; d < direction.length; d++) {
-      const [x, y] = spot;
-      const [dx, dy] = direction[d];
-
-      //새롭게 이동한 가상의 정점이 유효한지 확인한다.
-      console.log("새로운정점: ", x + dx, y + dy);
-      if (
-        isValid(x + dx, y + dy) &&
-        (maps[x + dx][y + dy] === "O" || maps[x + dx][y + dy] === "L") &&
-        visited[`${x + dx},${y + dy}`] === undefined
-      ) {
-        if (maps[x + dx][y + dy] === "E") return dist + 1;
-        visited[`${x + dx},${y + dy}`] = true;
-        queue.push([[x + dx, y + dy], dist + 1]);
-      }
-    }
-    return -1;
+    return [fileY, fileX, fileY + 1, fileX + 1];
   }
+  //가장 위에파일 찾기
+  const fileLY = wallpaper.findIndex((line) => line.includes("#"));
+  //가장 왼쪽에 파일 찾기
+  const fileLX = Math.min(
+    ...wallpaper
+      .map((line) => line.split("").findIndex((ch) => ch === "#"))
+      .filter((n) => n >= 0)
+  );
+
+  //왼쪽 위 교점 구하기
+
+  //가장 아래 파일 찾기
+  const fileRY =
+    wallpaper.length -
+    wallpaper.reverse().findIndex((line) => line.includes("#"));
+
+  //가장 오른쪽 파일 찾기
+  const fileRX = Math.max(
+    ...wallpaper
+      .filter((line) => line.includes("#"))
+      .map(
+        (line) =>
+          line.length -
+          line
+            .split("")
+            .reverse()
+            .findIndex((ch) => ch === "#")
+      )
+      .filter((n) => n >= 0)
+  );
+  return [fileLY, fileLX, fileRY, fileRX + 1];
 }
 
-solution(["SOOOL", "XXXXO", "OOOOO", "OXXXX", "OOOOE"]);
+solution([
+  ".##...##.",
+  "#..#.#..#",
+  "#...#...#",
+  ".#.....#.",
+  "..#...#..",
+  "...#.#...",
+  "....#....",
+]);
+//y좌표, x좌표 순으로 리턴
+//파일 위치가 x: 0 y: 1인 경우
+
+//왼쪽 위: x: 0 y: 1
+//오른쪽 위: x: 1 y: 1
+
+//왼쪽 아래: x: 0 y: 2
+//오른쪽 아래: x: 1 y: 2
+
+//파일 위치가 x1 y1인 경우
+//왼쪽 위: x1 y1
+//오른쪽 위: x2 y1
+//왼쪽 아래: x1 y2
+//오른쪽 아래: x2 y2
