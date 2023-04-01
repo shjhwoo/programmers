@@ -6,7 +6,7 @@ function solution(m, n, startX, startY, balls) {
   });
   return answer;
 }
-
+//이거 점대칭으로 풀어야함.. 그냥 삼각비 쓰면 정수값 안나와서 다 틀림ㅠㅠ
 function getShortestDist(m, n, startX, startY, ball) {
   //두 공이 x좌표가 같은 경우
   const [targetX, targetY] = ball;
