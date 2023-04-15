@@ -42,6 +42,7 @@ function solution(plans) {
         //잠시 멈춰둔 과제가 있다면 이어서 진행
         if (tempStopped.size > 0) {
           const recentStoppped = Array.from(tempStopped).pop();
+          console.log(recentStoppped);
         }
       }
 
