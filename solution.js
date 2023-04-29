@@ -21,16 +21,19 @@ function solution(plans) {
   while (notStartedHomeworks.length > 0 || tempStoppedHomeWork.length > 0) {
     if (onFocus.length === 0) {
       //맨 처음인 경우
-      onFocus.push(notStartedHomeworks.pop());
+      onFocus.push(notStartedHomeworks.shift());
     } else {
-      //두번쨰...
-      //기존에 진행중이던 과제가 끝나는 시각, 새로운 과제 시작 시각을 비교
-      //a. 전자가 더 일찍 끝나는 경우: completed에 푸시
-      //b. 후자를 바로 시작해야 하는 경우: temp에 전 과제를 넣고, 남은 시각 업뎃해서 넣어주기, 그리고
       const {
         startTime: currentHomeWorkStartTime,
         endTime: currentHomeWorkEndTime,
       } = onFocus[0];
+
+      if (notStartedHomeworks.length === 0 && tempStoppedHomeWork.length > 0) {
+        return [...completed, ...onFocus, ...tempStoppedHomeWork.reverse()].map(
+          (plan) => plan.name
+        );
+      }
+
       const { startTime: newHomeWorkStartTIme, endTime: newHomeWorkEndTIme } =
         notStartedHomeworks[0];
 
@@ -71,6 +74,10 @@ function solution(plans) {
         onFocus.push(notStartedHomeworks.shift());
       }
     }
+  }
+
+  if (notStartedHomeworks.length === 0 && tempStoppedHomeWork.length === 0) {
+    return [...completed, ...onFocus].map((plan) => plan.name);
   }
 
   return completed.map((plan) => plan.name);
