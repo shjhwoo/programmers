@@ -14,77 +14,61 @@ function solution(plans) {
     (a, b) => a.startTime - b.startTime
   );
 
-  //현재 진행중인 과제
-  const onFocus = [];
-
   //완료한 과제가 쌓이는 곳
   const completed = [];
 
-  while (notStartedHomeworks.length > 0 || tempStoppedHomeWork.length > 0) {
-    if (onFocus.length === 0) {
-      //맨 처음인 경우
-      onFocus.push(notStartedHomeworks.shift());
-    } else {
-      const {
-        startTime: currentHomeWorkStartTime,
-        endTime: currentHomeWorkEndTime,
-      } = onFocus[0];
+  while (notStartedHomeworks.length > 0) {
+    const onFocus = notStartedHomeworks.shift();
+    const { name, startTime, duration, endTime } = onFocus;
 
-      if (notStartedHomeworks.length === 0 && tempStoppedHomeWork.length > 0) {
-        return [...completed, ...onFocus, ...tempStoppedHomeWork.reverse()].map(
-          (plan) => plan.name
-        );
+    if (notStartedHomeworks.length > 0) {
+      const nextPlan = notStartedHomeworks[0];
+      const {
+        name: nextName,
+        startTime: nextStartTime,
+        duration: nextDuration,
+        endTime: nextEndTime,
+      } = nextPlan;
+
+      if (nextStartTime < endTime) {
+        tempStoppedHomeWork.push({
+          ...onFocus,
+          duration: duration - (nextStartTime - startTime),
+        });
+        continue;
       }
 
-      const { startTime: newHomeWorkStartTIme, endTime: newHomeWorkEndTIme } =
-        notStartedHomeworks[0];
+      //계획대로 진행중이던 과제 종료
+      completed.push(onFocus);
 
-      if (currentHomeWorkEndTime <= newHomeWorkStartTIme) {
-        completed.push(onFocus.shift());
-
-        //새로 시작할 과제와 잠시 멈춘 과제가 모두 있는 경우
-        if (notStartedHomeworks.length > 0 && tempStoppedHomeWork.length > 0) {
-          onFocus.push(notStartedHomeworks.shift());
-        }
-
-        //잠시 멈춘 과제만 있는 경우
-        if (
-          notStartedHomeworks.length === 0 &&
-          tempStoppedHomeWork.length > 0
-        ) {
-          onFocus.push({
-            ...tempStoppedHomeWork.pop(),
-            startTime: newHomeWorkEndTIme,
+      //남은 시간동안 과제를 진행
+      /*
+        a. 앞으로 해야하는 것, 임시로 그만둔것 모두 있음 => 앞으로 해야할것 부터
+        b. 앞으로 해야하는 것만 남은 경우
+        c. 임시로 그만둔것만 있음 => 다 몰아서 바로 리턴
+      */
+      while (tempStoppedHomeWork.length > 0) {
+        //다음 과제 시작 시간 전까지 남은 시간, 가장 최근에 멈춘 과제를 하는 데 걸리는 시간
+        const focus = tempStoppedHomeWork.pop();
+        const { name, startTime, duration } = focus;
+        if (nextStartTime - endTime >= duration) {
+          completed.push(focus);
+        } else {
+          //멈춘 과제와 새로 시작할 과제 모두 있음
+          tempStoppedHomeWork.push({
+            ...focus,
+            startTime: endTime,
+            duration: duration - (nextStartTime - endTime),
           });
         }
-
-        //새로 시작할 과제만 있는 경우
-        if (
-          notStartedHomeworks.length > 0 &&
-          tempStoppedHomeWork.length === 0
-        ) {
-          onFocus.push(notStartedHomeworks.shift());
-        }
-      } else {
-        /*
-          단순히 특정 과제 단독으로 시작시간, 걸리는시간을 보면 안되고 다음 과제를 시작하게 될 때 까지 걸리는 시간이 소모되는 걸 생각해야함
-          테스트3개는 통과인데 제출에서 거의 반타작인 경우 남은시간이 차감되는걸 신경쓰지 않았을 확률이 큼
-        */
-        //새 숙제부터 시작해야해
-        const { name, startTime, duration, endTime } = onFocus[0];
-        const remainedDuration =
-          duration - (newHomeWorkStartTIme - currentHomeWorkStartTime);
-        tempStoppedHomeWork.push({
-          ...onFocus.shift(),
-          duration: remainedDuration,
-        });
-        onFocus.push(notStartedHomeworks.shift());
       }
     }
   }
 
-  if (notStartedHomeworks.length === 0 && tempStoppedHomeWork.length === 0) {
-    return [...completed, ...onFocus].map((plan) => plan.name);
+  console.log("잠시 멈춘 과제:", tempStoppedHomeWork);
+
+  while (tempStoppedHomeWork.length > 0) {
+    completed.push(tempStoppedHomeWork.pop());
   }
 
   return completed.map((plan) => plan.name);
