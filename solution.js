@@ -8,6 +8,8 @@ function solution(plans) {
   const tempStoppedHomeWork = [];
 
   //과제 시작 시간 기준 오름차순으로 정렬한다
+
+  //정렬할 때 그냥 시 분을 분으로 통일해서 봐야하나 time 함수로 바꿔서 그런가.
   const notStartedHomeworks = formatPlans(plans).sort(
     (a, b) => a.startTime - b.startTime
   );
@@ -38,9 +40,10 @@ function solution(plans) {
         notStartedHomeworks[0];
 
       if (currentHomeWorkEndTime <= newHomeWorkStartTIme) {
+        completed.push(onFocus.shift());
+
         //새로 시작할 과제와 잠시 멈춘 과제가 모두 있는 경우
         if (notStartedHomeworks.length > 0 && tempStoppedHomeWork.length > 0) {
-          completed.push(onFocus.shift());
           onFocus.push(notStartedHomeworks.shift());
         }
 
@@ -49,7 +52,6 @@ function solution(plans) {
           notStartedHomeworks.length === 0 &&
           tempStoppedHomeWork.length > 0
         ) {
-          completed.push(onFocus.shift());
           onFocus.push({
             ...tempStoppedHomeWork.pop(),
             startTime: newHomeWorkEndTIme,
@@ -57,20 +59,25 @@ function solution(plans) {
         }
 
         //새로 시작할 과제만 있는 경우
-        //정상적으로 끝남
         if (
           notStartedHomeworks.length > 0 &&
           tempStoppedHomeWork.length === 0
         ) {
-          completed.push(onFocus.shift());
           onFocus.push(notStartedHomeworks.shift());
         }
       } else {
+        /*
+          단순히 특정 과제 단독으로 시작시간, 걸리는시간을 보면 안되고 다음 과제를 시작하게 될 때 까지 걸리는 시간이 소모되는 걸 생각해야함
+          테스트3개는 통과인데 제출에서 거의 반타작인 경우 남은시간이 차감되는걸 신경쓰지 않았을 확률이 큼
+        */
         //새 숙제부터 시작해야해
         const { name, startTime, duration, endTime } = onFocus[0];
-        const newDuration =
+        const remainedDuration =
           duration - (newHomeWorkStartTIme - currentHomeWorkStartTime);
-        tempStoppedHomeWork.push({ ...onFocus.shift(), duration: newDuration });
+        tempStoppedHomeWork.push({
+          ...onFocus.shift(),
+          duration: remainedDuration,
+        });
         onFocus.push(notStartedHomeworks.shift());
       }
     }
@@ -90,7 +97,7 @@ function formatPlans(plans) {
     return {
       name: plan[0],
       startTime: new Date(null, null, null, hh, mm),
-      durations: plan[2],
+      duration: plan[2],
       endTime: new Date(
         new Date(null, null, null, hh, mm).getTime() + plan[2] * 60000
       ),
@@ -100,7 +107,7 @@ function formatPlans(plans) {
 
 const answer = solution([
   ["korean", "11:40", "30"],
-  ["english", "12:10", "20"],
+  ["english", "12:10", "9999999999999"],
   ["math", "12:30", "40"],
 ]);
 
@@ -109,7 +116,7 @@ console.log(answer);
 const answer2 = solution([
   ["science", "12:40", "50"],
   ["music", "12:20", "40"],
-  ["history", "14:00", "30"],
+  ["history", "14:00", "99999999999999999999"],
   ["computer", "12:30", "100"],
 ]);
 
