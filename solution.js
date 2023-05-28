@@ -124,97 +124,81 @@
 // console.log(answer3);
 
 function solution(park, routes) {
-  //시작 지점을 구한다(배열)
-  let startPoint = getStartPoint(park);
+  //시작 지점 구하기
+  let [row, col] = getStartPoint(park);
 
-  let newPoint = startPoint;
-  // routes를 순회하면서 다음 작업을 한다
   for (let i = 0; i < routes.length; i++) {
-    newPoint = getNewPoint(newPoint, routes[i], park);
+    const tempPoint = getNewDestination([row, col], routes[i]);
+    if (isInPark(tempPoint, park)) {
+      if (NoHuddleInWay([row, col], tempPoint, park)) {
+        row = tempPoint[0];
+        col = tempPoint[1];
+      }
+    }
   }
-
-  //모든 요소를 다 순회했을 떄 정답을 반환한다
-  return newPoint;
+  return [row, col];
 }
 
 function getStartPoint(park) {
-  const row = park.findIndex((ele) => ele.includes("S"));
+  const row = park.findIndex((route) => route.includes("S"));
   const col = park[row].split("").findIndex((el) => el === "S");
   return [row, col];
 }
 
-function getNewPoint(current, route, park) {
-  const [op, dist] = route.split(" ");
+function getNewDestination(currentPoint, command) {
+  const [curRow, curCol] = currentPoint;
 
-  let newPoint = current;
+  const [op, n] = command.split(" ");
 
   switch (op) {
-    case "S":
-      newPoint = [Number(current[0]) + Number(dist), current[1]];
-      break;
-    case "N":
-      newPoint = [Number(current[0]) - Number(dist), current[1]];
-      break;
     case "E":
-      newPoint = [current[0], Number(current[1]) + Number(dist)];
-      break;
+      return [curRow, Number(curCol) + Number(n)];
     case "W":
-      newPoint = [current[0], Number(current[1]) - Number(dist)];
-      break;
+      return [curRow, Number(curCol) - Number(n)];
+    case "S":
+      return [Number(curRow) + Number(n), curCol];
+    case "N":
+      return [Number(curRow) - Number(n), curCol];
   }
-
-  if (!isValidPoint(current, op, newPoint, park)) {
-    newPoint = current;
-  }
-
-  return newPoint;
 }
 
-function isValidPoint(oldPoint, op, newPoint, park) {
-  const [oldcol, oldrow] = oldPoint;
-  const [col, row] = newPoint;
-  const endCol = Math.min(col, park[0].length - 1);
-  const endRow = Math.min(row, park.length - 1);
-
-  //도착칸이 장애물이 있거나, 또는 이동 시작점부터, 이동 도착점 사이에는 X가 없어야 한다.
-  let noXinWay = false;
-  switch (op) {
-    case "S":
-      //row들을 모두 구한다
-      //공원에 있는 아래의 줄들에서 도착점까지 전부다 O여야 한다
-      //도착점이 공원을 벗어나면 도착점은 공원의 경계점으로 한다
-      noXinWay = park.slice(oldrow + 1, endRow).every((r) => r[oldcol] === "O");
-      break;
-    case "N":
-      noXinWay = park.slice(endRow + 1, oldrow).every((r) => r[oldcol] === "O");
-      break;
-    case "E":
-      noXinWay = park[oldrow]
-        .slice(oldcol + 1, endCol)
-        .split("")
-        .every((c) => c === "O");
-      break;
-    case "W":
-      noXinWay = park[oldrow]
-        .slice(endCol + 1, oldcol)
-        .split("")
-        .every((c) => c === "O");
-      break;
-  }
-
+function isInPark(tempPoint, park) {
+  const [tempRow, tempCol] = tempPoint;
   return (
-    col >= 0 &&
-    row >= 0 &&
-    col <= park[0].length - 1 &&
-    row <= park.length - 1 &&
-    noXinWay
+    tempRow >= 0 &&
+    tempCol >= 0 &&
+    tempRow <= park.length - 1 &&
+    tempCol <= park[0].length - 1
   );
-}
+} //공원을 안 벗어났는지
 
-// const ans1 = solution(["SOO", "OOO", "OOO"], ["E 2", "S 2", "W 1"]);
+function NoHuddleInWay(oldPoint, newPoint, park) {
+  const [oldRow, oldCol] = oldPoint;
+  const [newRow, newCol] = newPoint;
+  // 같은 가로선상에 있는 경우: 공원의 그 줄 슬라이스 해서 X가 없으면 된다
+  if (oldRow === newRow) {
+    return !park[oldRow]
+      .slice(Math.min(oldCol, newCol), Math.max(oldCol, newCol) + 1)
+      .includes("X");
+  }
+  //같은 세로선상에 있는 경우: 공원의 시작로우부터 끝로우 사이에 있는 콜이 모두 X가 아니어야해
+  if (oldCol === newCol) {
+    return park
+      .slice(Math.min(oldRow, newRow), Math.max(oldRow, newRow) + 1)
+      .every((route) => route[oldCol] !== "X");
+  }
+} //진행로에 장애물이 없는지
 
-const ans2 = solution(["SOO", "OXX", "OOO"], ["E 2", "S 2", "W 1"]);
+const test1 =
+  solution(["SOO", "OOO", "OOO"], ["E 2", "S 2", "W 1"]).toString() ==
+  [2, 1].toString();
 
-// const ans3 = solution(["OSO", "OOO", "OXO", "OOO"], ["E 2", "S 3", "W 1"]);
+const test2 =
+  solution(["SOO", "OXX", "OOO"], ["E 2", "S 2", "W 1"]).toString() ===
+  [0, 1].toString();
 
-console.log(ans2);
+const test3 =
+  solution(["OSO", "OOO", "OXO", "OOO"], ["E 2", "S 3", "W 1"]).toString() ==
+  [0, 0].toString();
+
+console.log(test1, test2, test3);
