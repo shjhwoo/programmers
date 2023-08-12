@@ -1,17 +1,24 @@
-package main
+package main_test
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func main() {
-	var result = Solution([]string{"XXX", "XXX", "XXX", "XXX"})
-	fmt.Println("최종 결과값", result)
+func TestSolution(t *testing.T) {
+	res := Solution([]string{"X591X", "X1X5X", "X231X", "1XXX1"})
+	fmt.Println(res, "###")
+	exp := []int{1, 1, 27}
+	assert.Equal(t, len([]int{1, 1, 27}), len(res))
 
-	var res2 = Solution([]string{"X591X", "X1X5X", "X231X", "1XXX1"})
-	fmt.Println(res2, "두번째 테스트")
+	for i, el := range exp {
+		assert.Equal(t, el, res[i])
+	}
 }
 
 var directions = [][]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
@@ -38,7 +45,8 @@ func Solution(maps []string) []int {
 					dfs = func(startRow, startCol int) {
 						pixmap[r][c] = "0"
 						for _, d := range directions {
-							newSpot := []int{r + d[0], r + d[1]}
+							newSpot := []int{startRow + d[0], startCol + d[1]}
+							// fmt.Println(startRow, startCol, "+", d, "=", newSpot, "@@@@새로운지점.")
 							if isValidSpot(pixmap, newSpot[0], newSpot[1]) {
 								colInt, _ := strconv.Atoi(pixmap[newSpot[0]][newSpot[1]])
 								food += colInt
@@ -46,6 +54,7 @@ func Solution(maps []string) []int {
 								dfs(newSpot[0], newSpot[1])
 							}
 						}
+						fmt.Println("======")
 					}
 					dfs(r, c)
 				}()
@@ -54,6 +63,7 @@ func Solution(maps []string) []int {
 		}
 	}
 
+	sort.Ints(result)
 	return result
 }
 
@@ -88,5 +98,5 @@ func getPixeledMap(maps []string) [][]string {
 }
 
 func isValidSpot(maps [][]string, row, col int) bool {
-	return row < len(maps) && col < len(maps[0]) && row >= 0 && col >= 0 && maps[row][col] != "0"
+	return row < len(maps) && col < len(maps[0]) && row >= 0 && col >= 0 && maps[row][col] != "0" && maps[row][col] != "X"
 }
