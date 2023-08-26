@@ -1,102 +1,133 @@
 package main_test
 
 import (
-	"fmt"
-	"sort"
-	"strconv"
-	"strings"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSolution(t *testing.T) {
-	res := Solution([]string{"X591X", "X1X5X", "X231X", "1XXX1"})
-	fmt.Println(res, "###")
-	exp := []int{1, 1, 27}
-	assert.Equal(t, len([]int{1, 1, 27}), len(res))
+	res1 := Solution(16)
+	assert.Equal(t, 6, res1)
 
-	for i, el := range exp {
-		assert.Equal(t, el, res[i])
-	}
+	res2 := Solution(2554)
+	assert.Equal(t, 16, res2)
 }
 
-var directions = [][]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
-
-func Solution(maps []string) []int {
-	//주어진 맵에 전부다 X밖에 없는 상황이면은..
-	if hasNoIsland(maps) {
-		return []int{-1}
+func Solution(storey int) int {
+	logVal := math.Log10(float64(storey))
+	if logVal == float64(int(logVal)) {
+		return 1
 	}
 
-	//그 외의 상황에서는 각 섬에서 최대 며칠 머무를 수 있는지 알아야 한다.
-
-	//map을 쪼개준다
-	pixmap := getPixeledMap(maps)
-	result := []int{}
-
-	for r, row := range pixmap {
-		for c, col := range row {
-			//탐색가능한 지점이다(완전히 새로운 섬이다!!)
-			if col != "X" && col != "0" {
-				food, _ := strconv.Atoi(col)
-				func() {
-					var dfs func(int, int)
-					dfs = func(startRow, startCol int) {
-						pixmap[r][c] = "0"
-						for _, d := range directions {
-							newSpot := []int{startRow + d[0], startCol + d[1]}
-							// fmt.Println(startRow, startCol, "+", d, "=", newSpot, "@@@@새로운지점.")
-							if isValidSpot(pixmap, newSpot[0], newSpot[1]) {
-								colInt, _ := strconv.Atoi(pixmap[newSpot[0]][newSpot[1]])
-								food += colInt
-								pixmap[newSpot[0]][newSpot[1]] = "0"
-								dfs(newSpot[0], newSpot[1])
-							}
-						}
-						fmt.Println("======")
-					}
-					dfs(r, c)
-				}()
-				result = append(result, food)
-			}
-		}
-	}
-
-	sort.Ints(result)
-	return result
+	return 0
 }
 
-func hasNoIsland(maps []string) bool {
-	for _, row := range maps {
-		if !isAllX(row) {
-			return false
-		}
-	}
-	return true
-}
+/*경우의 수
+1인 경우 1개
+2인 경우 2개
+3인 경우 3개
+4인 경우 4개
+5인 경우 5개
+6인 경우 -10 + 4 => 5개 . 6개 쓰는 것보다 이득임
+7인 경우 -10 + 3 => 4개
+8인 경우 -10 + 2 => 3개
+9인 경우 -10 + 1 => 2개
+10인 경우 -10 => 1개
 
-func isAllX(row string) bool {
-	pList := strings.Split(row, "")
+11인 경우 -10 -1 2개
+12인 경우 -10 -2 3개
+13인 경우 -10 -3 4개
+14인 경우 -10 -4 5개
+15인 경우 -10 -5 6개
+16인 경우 -10 -10 + 4 6개
+17인 경우 -10 -10 + 3 5개
+18인 경우 -10 -10 + 2 4개
+19인 경우 -10 -10 + 1 3개
+20인 경우 -10 -10 2개
 
-	for _, p := range pList {
-		if p != "X" {
-			return false
-		}
-	}
-	return true
-}
+21인 경우 -10 -10 -1 3개
+22인 경우 -10 -10 -2 4개
+23인 경우 -10 -10 -3 5개
+24인 경우 -10 -10 -4 6개
+25인 경우 -10 -10 -5 7개
+26인 경우 -10 -10 -10 + 4 7개
+27인 경우 -10 -10 -10 + 3 6개
+28인 경우 -10 -10 -10 + 2 5개
+29인 경우 -10 -10 -10 + 1 4개
+30인 경우 -10 -10 -10 3개
 
-func getPixeledMap(maps []string) [][]string {
-	result := [][]string{}
-	for _, row := range maps {
-		newRow := append([]string{}, strings.Split(row, "")...)
-		result = append(result, newRow)
-	}
+...
+50인 경우 -10 * 5 5개
+51인 경우 -10 * 5 + -1 6개
+52인 경우 -10 * 5 + -1 * 2 7개
+53인 경우 -10 * 5 -1 * 3 8개
+54인 경우 -10 * 5 -1 * 4 9개 또는 -10 * 6 + 1 * 6
+55인 경우 -10 * 5 -1 * 5 10개 또는 -10 * 6 + 1 * 5 11개
+56인 경우 -10 * 5 -1 * 6 11개 또는 -10 * 6 +  1 * 4 10개
+57인 경우 -10 * 5 -1 * 7 12개 또는 -10 * 6 + 1 * 3 9개 === (-10 * 5 , -10 * 1 + 1 * 3)
 
-	return result
-}
 
-func isValidSpot(maps [][]string, row, col int) bool {
-	return row < len(maps) && col < len(maps[0]) && row >= 0 && col >= 0 && maps[row][col] != "0" && maps[row][col] != "X"
-}
+60인 경우 6개 쓰는 것보다, -100 + 10 + 10 + 10 + 10 5개 쓰는게 이득
+66인 경우 :
+-100 + 10 * 3 + 1 * 4  = 8개
+-100 + 10 * 4  + -10 + 1 * 4 = 9개
+
+
+101인 경우 -100 -1 2개
+106인 경우 -100 -10 + 4 vs -100 -6
+107인 경우 -100 -10 + 3 vs -100 -7
+
+116인 경우 -100 -20 + 4
+
+2554인 경우
+각 자리수에 대해 2가지 경우가 있을 수 있다...?
+그 두가지 경우 중 하나를 고르는 기준은 무엇일까? 그리고 그 기준대로 계산하는 게 맞는건가
+1000: -1000 * 2 또는 -1000 * 3
+100: 앞 자리수에 따라 달라지는데,
+-1000 * 2를 선택한경우.
+-100 * 6  또는 -100 * 5가 될수있다.
+
+-1000 * 3을 선택한경우
+446만큼 다시 올라가야 하는데
+-100 * 5 또는 -100 * 4
+(-10 * 4 + -10 * 1 + 4)
+
+그러면 정리하면 주어진 숫자보다 최소로 더 큰 다음 시작점숫자를 찾는다. 끝자리수는 0으로 끝나야한다
+2554인 경우 3000
+12345인 경우 20000
+857인 경우 900
+593인 경우 600 이런식.
+
+그 다음에 다음 기점의 숫자에 도달하려할때 이게 중간지점을 안넘은 경우랑 넘은 경우로 판단할 수 있는데
+2554인 경우 2000~3000 중간인 2500을 넘었으니까,
+1000을 두번빼는것보다 3번빼고 더 내려간거를 채우는게 이득이라고 판단하는 것
+
+2222였다면, 그냥 1000을 두번빼는게 맞았겠지? (돌 8개)
+
+2282였다면 , -1000 * 2 + -100 * 2 + -100 * 1 + 10 * 2 -2 (돌9개)
+-1000 * 2 + -100 * 2 + -10 * 8 -1 * 2
+
+
+
+6000인 경우 -1000 + 400 5개 쓰는 게 이득
+
+그러면 6666의 경우에는? -10000 + 4000 -1000 + 400 -100 + 40 -10 + 4 => 4개 + 16개 = 20개
+-10000 + 3334 => 1000 * 3 + 100 * 3 + 10 * 3 + 4 => 1개 + 3 + 3 + 3 + 4 => 14개
+또는
+다음 숫자가 7000이라고 보고
+
+중간인 6500넘었으니까
+-1000 * 7 + 100 * 3 + 10 * 3 + 1 * 4 ==> 17개..
+
+=> 각 자리의 숫자가 5를 넘은 경우에는 2가지 가짓수가ㅏ 있음
+다음으로 큰 최소수
+또는 10의 거듭제곱 기준으로 한 다음 최소수 (이게 더 적을수도 있기 때문에ㅠㅠ)
+
+
+...10의 n승 기준으로 기점이 나뉘어진다.
+숫자가 주어지면 그 숫자보다 최소로 큰 10의 거듭제곱값을 찾는다?
+
+그리고 10의 거듭제곱으로 이루어진 숫자라면 그거는 무조건 1개만 쓰면 된다
+*/
