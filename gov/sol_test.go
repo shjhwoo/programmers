@@ -2,6 +2,8 @@ package main_test
 
 import (
 	"math"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +15,9 @@ func TestSolution(t *testing.T) {
 
 	res2 := Solution(2554)
 	assert.Equal(t, 16, res2)
+
+	res3 := Solution(6628)
+	assert.Equal(t, 13, res3)
 }
 
 func Solution(storey int) int {
@@ -21,10 +26,86 @@ func Solution(storey int) int {
 		return 1
 	}
 
-	return 0
+	if storey < 10 {
+		if storey < 6 {
+			return storey
+		} else {
+			return 1 + (10 - storey)
+		}
+	}
+
+	//두 자리수 이상.
+	numSlice := getNumSliceFromStorey(storey)
+
+	if isAllnumIsGreaterThanFive(numSlice) {
+		pow := int(math.Ceil(math.Log10(float64(storey))))
+		maxBtn := math.Pow10(pow)
+		remainder := int(maxBtn) - storey
+		var rsum int
+		for _, rn := range getNumSliceFromStorey(remainder) {
+			rsum += rn
+		}
+		return 1 + rsum
+	}
+
+	var res int
+	for i, n := range numSlice {
+		if n < 6 {
+			if numSlice[i+1] > 5 {
+
+			} else {
+
+			}
+		} else {
+			if i == 0 {
+				res += 1
+				pow := int(math.Ceil(math.Log10(float64(storey))))
+				maxBtn := math.Pow10(pow)
+				//나머지를 구해준다
+				remainder := int(maxBtn) - storey
+				//이 나머지는 다시 올라가야 하는 값을 의미한다.
+
+			}
+		}
+	}
+
+	return res
+}
+
+func isAllnumIsGreaterThanFive(numSlice []int) bool {
+	for _, n := range numSlice {
+		if n < 6 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func getNumSliceFromStorey(storey int) []int {
+	numStrSlice := (strings.Split(strconv.Itoa(storey), ""))
+
+	var numSlice []int
+	for _, ns := range numStrSlice {
+		in, _ := strconv.Atoi(ns)
+		numSlice = append(numSlice, in)
+	}
+
+	return numSlice
 }
 
 /*경우의 수
+규칙 정리
+1) 숫자의 모든 자릿수가 5보다 크면 10배 큰 수로 한번 뺴고 보충하는 게 훨씬 이득임
+2) 그렇지 않은 경우..
+각 자릿수에 대해서 5보다 큰지 작은지 판단해보자
+5이하다. ! 그러면 이 숫자 뒤에 다음 숫자가 있고, 그 숫자가 5보다 크다 그러면 (28인 경우 30으로) 잡고 더 빠진거는 보충
+5보다 크다. 맨 앞자리가 아니라면 이전의 숫자가 알아서 처리해줘버린다.
+
+
+
+
+
 1인 경우 1개
 2인 경우 2개
 3인 경우 3개
@@ -108,12 +189,16 @@ func Solution(storey int) int {
 
 2282였다면 , -1000 * 2 + -100 * 2 + -100 * 1 + 10 * 2 -2 (돌9개)
 -1000 * 2 + -100 * 2 + -10 * 8 -1 * 2
+결국 숫자가 5를 넘냐 안넘냐가 판단의 기준인것
+맨 첫글자가 5를 넘는다 하면 아얘 다음 자릿수로 빼버리는 것이 이득일지도
 
 
+6000인 경우 -10000 + 4000 5개 쓰는 게 이득
+6600인 경우 -10000 + 3400
 
-6000인 경우 -1000 + 400 5개 쓰는 게 이득
+6628인 경우 -10000 + 3372 (16) 또는 -10000 + 3400 - 30 + 2 (13)
 
-그러면 6666의 경우에는? -10000 + 4000 -1000 + 400 -100 + 40 -10 + 4 => 4개 + 16개 = 20개
+그러면 6666의 경우에는?
 -10000 + 3334 => 1000 * 3 + 100 * 3 + 10 * 3 + 4 => 1개 + 3 + 3 + 3 + 4 => 14개
 또는
 다음 숫자가 7000이라고 보고
