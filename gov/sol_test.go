@@ -49,28 +49,90 @@ func Solution(storey int) int {
 	}
 
 	var res int
+	var remainder int
 	for i, n := range numSlice {
-		if n < 6 {
-			if numSlice[i+1] > 5 {
+		/*
+			누적해서 보여줄 결과값
+			현재 자리
+			현재 자리 바로 다음 숫자
 
-			} else {
+			1) 현재 자리가 첫번째 자리고 5보다 크다
+				res에 1 더함
+				rem에 10거듭제곱 - 숫자 뺀 값 더한다
+			2) 현재 자리가 첫번쨰 자리고 5보다 작다
+				3) 다음 숫자가 5 이하라면 숫자를 그대로 더한다
+				4) 다음 숫자가 6이상이라면 다음으로 큰 수를 더한다.
+					rem에다 다음으로 큰수 - 현재수 빼준다
 
-			}
-		} else {
-			if i == 0 {
+			다음 iter에서는?
+			현재자리와 다음 자리, 남아있는 숫자만 가지고 판단하면 되니까 굳이 numSlice 전체를 볼 일은 없을듯
+			1) remainder가 있는 경우
+			2) 없는 경우
+		*/
+		if i == 0 {
+			if n > 5 {
 				res += 1
 				pow := int(math.Ceil(math.Log10(float64(storey))))
 				maxBtn := math.Pow10(pow)
-				//나머지를 구해준다
-				remainder := int(maxBtn) - storey
-				//이 나머지는 다시 올라가야 하는 값을 의미한다.
-
+				remainder = int(maxBtn) - storey
+			} else {
+				if numSlice[i+1] <= 5 {
+					res += n
+				} else {
+					//다음으로 큰 수
+					res += n + 1
+					remainder = (n+1)*int(math.Pow10(len(numSlice)-i)) - getNumFromSlice(numSlice)
+				}
 			}
 		}
+
+		//다음 iter 계산
+		if remainder > 0 {
+
+		} else {
+			//reaminder가 또 생길수도 ㅣㅇㅆ다. 여기서 말하는 remiander란 돌을 아끼기 위해 일부러 더 많이 내려간 수치임.
+		}
+
+		//===
+		// if n <= 5 {
+		// 	if numSlice[i+1] <= 5 {
+		// 		res += n
+		// 	} else {
+		// 		//큰경우
+		// 		res += n + 1
+		// 		//더 빼준만큼 다시 더해야한다
+		// 		remainder := (n+1)*int(math.Pow10(len(numSlice)-i)) - getNumFromSlice()
+		// 	}
+		// } else {
+		// 	if i == 0 {
+		// 		res += 1
+		// 		pow := int(math.Ceil(math.Log10(float64(storey))))
+		// 		maxBtn := math.Pow10(pow)         //10000
+		// 		remainder := int(maxBtn) - storey //10000-6628 = 3372
+		// 		//이 나머지는 다시 올라가야 하는 값을 의미한다.
+		// 		//나머지에 대해서 같은 방법으로 판단.
+		// 		remainderNumList := getNumSliceFromStorey(remainder)
+		// 		for j, r := range remainderNumList {
+		// 			if r <= 5 {
+		// 				if j == 0 {
+		// 					if remainderNumList[j+1] <= 5 {
+		// 						res += r
+		// 					} else {
+		// 						//또 같은 방법
+		// 					}
+		// 				} else {
+		// 					//또 같은 방법이 반복됨..
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// }
 	}
 
 	return res
 }
+
+//언제까지? 더 이상 탐색할 수 있는 숫자가 안 나올 때까지.
 
 func isAllnumIsGreaterThanFive(numSlice []int) bool {
 	for _, n := range numSlice {
@@ -94,12 +156,26 @@ func getNumSliceFromStorey(storey int) []int {
 	return numSlice
 }
 
+func getNumFromSlice(numSlice []int) int {
+	resStr := ""
+	for _, n := range numSlice {
+		resStr += strconv.Itoa(n)
+	}
+
+	n, err := strconv.Atoi(resStr)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
 /*경우의 수
 규칙 정리
 1) 숫자의 모든 자릿수가 5보다 크면 10배 큰 수로 한번 뺴고 보충하는 게 훨씬 이득임
 2) 그렇지 않은 경우..
 각 자릿수에 대해서 5보다 큰지 작은지 판단해보자
-5이하다. ! 그러면 이 숫자 뒤에 다음 숫자가 있고, 그 숫자가 5보다 크다 그러면 (28인 경우 30으로) 잡고 더 빠진거는 보충
+5이하다. ! 그러면 이 숫자 뒤에 다음 숫자가 있고,
+그 숫자가 5보다 크다 그러면 (28인 경우 30으로) 잡고 더 빠진거는 보충
 5보다 크다. 맨 앞자리가 아니라면 이전의 숫자가 알아서 처리해줘버린다.
 
 
