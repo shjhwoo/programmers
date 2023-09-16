@@ -21,6 +21,7 @@ func TestSolution(t *testing.T) {
 }
 
 func Solution(storey int) int {
+
 	logVal := math.Log10(float64(storey))
 	if logVal == float64(int(logVal)) {
 		return 1
@@ -59,7 +60,7 @@ func Solution(storey int) int {
 			1) 현재 자리가 첫번째 자리고 5보다 크다
 				res에 1 더함
 				rem에 10거듭제곱 - 숫자 뺀 값 더한다
-			2) 현재 자리가 첫번쨰 자리고 5보다 작다
+			2) 현재 자리가 첫번쨰 자리고 5이하다.
 				3) 다음 숫자가 5 이하라면 숫자를 그대로 더한다
 				4) 다음 숫자가 6이상이라면 다음으로 큰 수를 더한다.
 					rem에다 다음으로 큰수 - 현재수 빼준다
@@ -69,70 +70,52 @@ func Solution(storey int) int {
 			1) remainder가 있는 경우
 			2) 없는 경우
 		*/
-		if i == 0 {
-			if n > 5 {
-				res += 1
-				pow := int(math.Ceil(math.Log10(float64(storey))))
-				maxBtn := math.Pow10(pow)
-				remainder = int(maxBtn) - storey
-			} else {
-				if numSlice[i+1] <= 5 {
-					res += n
-				} else {
-					//다음으로 큰 수
-					res += n + 1
-					remainder = (n+1)*int(math.Pow10(len(numSlice)-i)) - getNumFromSlice(numSlice)
-				}
-			}
-		}
 
-		//다음 iter 계산
-		if remainder > 0 {
-
-		} else {
-			//reaminder가 또 생길수도 ㅣㅇㅆ다. 여기서 말하는 remiander란 돌을 아끼기 위해 일부러 더 많이 내려간 수치임.
-		}
-
-		//===
-		// if n <= 5 {
-		// 	if numSlice[i+1] <= 5 {
-		// 		res += n
-		// 	} else {
-		// 		//큰경우
-		// 		res += n + 1
-		// 		//더 빼준만큼 다시 더해야한다
-		// 		remainder := (n+1)*int(math.Pow10(len(numSlice)-i)) - getNumFromSlice()
-		// 	}
-		// } else {
-		// 	if i == 0 {
-		// 		res += 1
-		// 		pow := int(math.Ceil(math.Log10(float64(storey))))
-		// 		maxBtn := math.Pow10(pow)         //10000
-		// 		remainder := int(maxBtn) - storey //10000-6628 = 3372
-		// 		//이 나머지는 다시 올라가야 하는 값을 의미한다.
-		// 		//나머지에 대해서 같은 방법으로 판단.
-		// 		remainderNumList := getNumSliceFromStorey(remainder)
-		// 		for j, r := range remainderNumList {
-		// 			if r <= 5 {
-		// 				if j == 0 {
-		// 					if remainderNumList[j+1] <= 5 {
-		// 						res += r
-		// 					} else {
-		// 						//또 같은 방법
-		// 					}
-		// 				} else {
-		// 					//또 같은 방법이 반복됨..
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
 	}
 
 	return res
 }
 
-//언제까지? 더 이상 탐색할 수 있는 숫자가 안 나올 때까지.
+/*
+	재귀 종료 조건
+	numSlice의 길이가 1인 경우. 이제 종료하고 리턴한다.
+
+	반복 조건
+	길이가 2 이상인 경우.
+*/
+
+func getNumOfStones(numSlice []int, remainder, storey int) int {
+	if len(numSlice) == 1 {
+		if numSlice[0] < 6 {
+			return numSlice[0]
+		}
+		return 1 + (10 - numSlice[0])
+	}
+
+	//현재 자리에서 구할 수 있는 돌의 수 + 그 다음자리부터의 돌의 수
+	var currStone = getCurrStone()
+
+	return currStone + getNumOfStones(numSlice[1:], remainder, storey)
+}
+
+// remainder가 생길지 안생길지 판단하는 함수
+func hasRemainder(numSlice []int) bool {
+	return numSlice[0] > 5 || (numSlice[0] <= 5 && numSlice[1] > 5)
+}
+
+func getRemainder(numSlice []int, storey int) int {
+	if numSlice[0] > 5 {
+		pow := int(math.Ceil(math.Log10(float64(storey))))
+		maxBtn := math.Pow10(pow)
+		return int(maxBtn) - storey
+	}
+
+	if numSlice[1] > 5 {
+		return (numSlice[1]+1)*int(math.Pow10(len(numSlice)-1)) - getNumFromSlice(numSlice)
+	}
+
+	return 0
+}
 
 func isAllnumIsGreaterThanFive(numSlice []int) bool {
 	for _, n := range numSlice {
