@@ -16,87 +16,100 @@ func TestSolution(t *testing.T) {
 	res2 := Solution(2554)
 	assert.Equal(t, 16, res2)
 
+	//XXX
 	res3 := Solution(6628)
 	assert.Equal(t, 13, res3)
 }
 
 func Solution(storey int) int {
-
 	logVal := math.Log10(float64(storey))
 	if logVal == float64(int(logVal)) {
 		return 1
 	}
 
-	if storey < 10 {
-		if storey < 6 {
-			return storey
-		} else {
-			return 1 + (10 - storey)
-		}
-	}
-
-	//두 자리수 이상.
 	numSlice := getNumSliceFromStorey(storey)
 
-	if isAllnumIsGreaterThanFive(numSlice) {
-		pow := int(math.Ceil(math.Log10(float64(storey))))
-		maxBtn := math.Pow10(pow)
-		remainder := int(maxBtn) - storey
-		var rsum int
-		for _, rn := range getNumSliceFromStorey(remainder) {
-			rsum += rn
+	//모든 자릿수가 5 이상인 경우 또는 첫번째 자리 숫자가 5 이상인 경우
+	/*
+		첫번째 자리가 5이상인경우(다음10지수, 다음으로 큰 수 중에 비용이 적은 것을 선택)
+			두번째자리가 5 이상인경우
+			5739
+			두번쨰자리가 5이하인경우
+			5468
+			=> 두번째 자리가 뭐가 되었든간에, 5 이상이라 다은 10지수로 계산하는게 제일 최소 비용이다.
+	*/
+	if numSlice[0] >= 5 {
+		rem := int(math.Pow10(len(numSlice)+1)) - storey
+		var stones int
+		for _, r := range getNumSliceFromStorey(rem) {
+			stones += r
 		}
-		return 1 + rsum
+		return 1 + stones
 	}
 
-	var res int
-	var remainder int
-	for i, n := range numSlice {
-		/*
-			누적해서 보여줄 결과값
-			현재 자리
-			현재 자리 바로 다음 숫자
-
-			1) 현재 자리가 첫번째 자리고 5보다 크다
-				res에 1 더함
-				rem에 10거듭제곱 - 숫자 뺀 값 더한다
-			2) 현재 자리가 첫번쨰 자리고 5이하다.
-				3) 다음 숫자가 5 이하라면 숫자를 그대로 더한다
-				4) 다음 숫자가 6이상이라면 다음으로 큰 수를 더한다.
-					rem에다 다음으로 큰수 - 현재수 빼준다
-
-			다음 iter에서는?
-			현재자리와 다음 자리, 남아있는 숫자만 가지고 판단하면 되니까 굳이 numSlice 전체를 볼 일은 없을듯
-			1) remainder가 있는 경우
-			2) 없는 경우
-		*/
-
+	//모든 자릿수가 5 미만인 경우
+	if isAllnumIsLessThanFive(numSlice) {
+		var res int
+		for _, n := range numSlice {
+			res += n
+		}
+		return res
 	}
 
-	return res
+	/*
+		//혼재하는 경우ㅠㅠ
+			첫번째 자리가 5미만인경우
+			두번째 자리가 5이상인경우
+			4523
+			4566
+			두번째 자리가 5이하면
+			4268
+			4238
+	*/
+	var candidates []int
+	var can1 int
+	for _, n := range numSlice {
+		can1 += n
+	}
+	candidates = append(candidates, can1)
+
+	nextNum := (numSlice[0] + 1) * int(math.Pow10(len(numSlice)))
+	rem := nextNum - storey
+	var remSum int
+	for _, n := range getNumSliceFromStorey(rem) {
+		remSum += n
+	}
+	can2 := numSlice[0] + 1 + remSum
+	candidates = append(candidates, can2)
+
+	var minNum = candidates[0]
+	for _, c := range candidates {
+		if c < minNum {
+			minNum = c
+		}
+	}
+	return minNum
+
 }
 
 /*
-	재귀 종료 조건
-	numSlice의 길이가 1인 경우. 이제 종료하고 리턴한다.
+누적해서 보여줄 결과값
+현재 자리
+현재 자리 바로 다음 숫자
 
-	반복 조건
-	길이가 2 이상인 경우.
+ 1. 현재 자리가 첫번째 자리고 5보다 크다
+    res에 1 더함
+    rem에 10거듭제곱 - 숫자 뺀 값 더한다
+ 2. 현재 자리가 첫번쨰 자리고 5이하다.
+ 3. 다음 숫자가 5 이하라면 숫자를 그대로 더한다
+ 4. 다음 숫자가 6이상이라면 다음으로 큰 수를 더한다.
+    rem에다 다음으로 큰수 - 현재수 빼준다
+
+다음 iter에서는?
+현재자리와 다음 자리, 남아있는 숫자만 가지고 판단하면 되니까 굳이 numSlice 전체를 볼 일은 없을듯
+1) remainder가 있는 경우
+2) 없는 경우
 */
-
-func getNumOfStones(numSlice []int, remainder, storey int) int {
-	if len(numSlice) == 1 {
-		if numSlice[0] < 6 {
-			return numSlice[0]
-		}
-		return 1 + (10 - numSlice[0])
-	}
-
-	//현재 자리에서 구할 수 있는 돌의 수 + 그 다음자리부터의 돌의 수
-	var currStone = getCurrStone()
-
-	return currStone + getNumOfStones(numSlice[1:], remainder, storey)
-}
 
 // remainder가 생길지 안생길지 판단하는 함수
 func hasRemainder(numSlice []int) bool {
@@ -117,9 +130,19 @@ func getRemainder(numSlice []int, storey int) int {
 	return 0
 }
 
-func isAllnumIsGreaterThanFive(numSlice []int) bool {
+func isAllnumIsGreaterOrEqualThanFive(numSlice []int) bool {
 	for _, n := range numSlice {
-		if n < 6 {
+		if n < 5 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isAllnumIsLessThanFive(numSlice []int) bool {
+	for _, n := range numSlice {
+		if n >= 5 {
 			return false
 		}
 	}
