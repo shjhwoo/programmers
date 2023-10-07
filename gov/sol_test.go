@@ -9,16 +9,66 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type TestCase struct {
+	input  int
+	expect int
+}
+
 func TestSolution(t *testing.T) {
-	res1 := Solution(16)
-	assert.Equal(t, 6, res1)
 
-	res2 := Solution(2554)
-	assert.Equal(t, 16, res2)
+	var tests = []TestCase{
+		{
+			input:  16,
+			expect: 6,
+		},
+		{
+			input:  2554,
+			expect: 16,
+		},
+		{
+			input:  6628,
+			expect: 16,
+		},
+		{
+			input:  99999,
+			expect: 2,
+		},
+		{
+			input:  10110,
+			expect: 3,
+		},
+		{
+			input:  1273,
+			expect: 13,
+		},
+		{
+			input:  1580,
+			expect: 8,
+		},
+		{
+			input:  90909,
+			expect: 6,
+		},
+		{
+			input:  90807,
+			expect: 9,
+		},
+		{
+			input:  9807,
+			expect: 14,
+		},
+		{
+			input:  9007,
+			expect: 6,
+		},
+	}
 
-	//XXX
-	res3 := Solution(6628)
-	assert.Equal(t, 13, res3)
+	for _, test := range tests {
+		if !assert.Equal(t, test.expect, Solution(test.input)) {
+			t.Log(test.input, "@@@@@@@@@@@@@@@@@@")
+		}
+	}
+
 }
 
 func Solution(storey int) int {
@@ -29,66 +79,153 @@ func Solution(storey int) int {
 
 	numSlice := getNumSliceFromStorey(storey)
 
-	//모든 자릿수가 5 이상인 경우 또는 첫번째 자리 숫자가 5 이상인 경우
-	/*
-		첫번째 자리가 5이상인경우(다음10지수, 다음으로 큰 수 중에 비용이 적은 것을 선택)
-			두번째자리가 5 이상인경우
-			5739
-			두번쨰자리가 5이하인경우
-			5468
-			=> 두번째 자리가 뭐가 되었든간에, 5 이상이라 다은 10지수로 계산하는게 제일 최소 비용이다.
-	*/
-	if numSlice[0] >= 5 {
-		rem := int(math.Pow10(len(numSlice)+1)) - storey
-		var stones int
-		for _, r := range getNumSliceFromStorey(rem) {
-			stones += r
-		}
-		return 1 + stones
-	}
-
-	//모든 자릿수가 5 미만인 경우
-	if isAllnumIsLessThanFive(numSlice) {
-		var res int
-		for _, n := range numSlice {
-			res += n
-		}
-		return res
-	}
-
-	/*
-		//혼재하는 경우ㅠㅠ
-			첫번째 자리가 5미만인경우
-			두번째 자리가 5이상인경우
-			4523
-			4566
-			두번째 자리가 5이하면
-			4268
-			4238
-	*/
-	var candidates []int
-	var can1 int
-	for _, n := range numSlice {
-		can1 += n
-	}
-	candidates = append(candidates, can1)
-
-	nextNum := (numSlice[0] + 1) * int(math.Pow10(len(numSlice)))
-	rem := nextNum - storey
-	var remSum int
-	for _, n := range getNumSliceFromStorey(rem) {
-		remSum += n
-	}
-	can2 := numSlice[0] + 1 + remSum
-	candidates = append(candidates, can2)
-
-	var minNum = candidates[0]
-	for _, c := range candidates {
-		if c < minNum {
-			minNum = c
+	var logs []int
+	for index, num := range numSlice {
+		if num > 5 {
+			rem := 10 - num
+			logs = append(logs, -1*int(math.Pow10(len(numSlice)-index)))    //더 빼줌
+			logs = append(logs, int(math.Pow10(len(numSlice)-1-index))*rem) //더뺀만큼 다시 올라감
+		} else {
+			logs = append(logs, -1*int(math.Pow10(len(numSlice)-1-index))*num)
 		}
 	}
-	return minNum
+
+	logs = trimLogs(logs)
+
+	var result int
+	for _, log := range logs {
+		abValue := int(math.Abs(float64(log)))
+
+		length := int(math.Pow10(len(strconv.Itoa(abValue)) - 1))
+
+		result += abValue / length
+	}
+
+	return result
+
+	// //밑에꺼 다치워라.
+
+	// //만약에 숫자 중간 중간에 0이 껴있고 0 아닌 숫자들은 5이상이라면??
+	// //90807
+	// //9007
+	// //9807
+
+	// //모든 자릿수가 5 이상인 경우 또는 첫번째 자리 숫자가 5 이상인 경우
+	// /*
+	// 	첫번째 자리가 5이상인경우(다음10지수, 다음으로 큰 수 중에 비용이 적은 것을 선택)
+	// 		두번째자리가 5 이상인경우
+	// 		5739
+	// 		두번쨰자리가 5이하인경우
+	// 		5468
+	// 		=> 두번째 자리가 뭐가 되었든간에, 5 이상이라 다은 10지수로 계산하는게 제일 최소 비용이다.
+	// */
+	// if isAllnumIsGreaterOrEqualThanFive(numSlice) {
+	// 	rem := int(math.Pow10(len(numSlice))) - storey
+	// 	var stones int
+	// 	for _, r := range getNumSliceFromStorey(rem) {
+	// 		stones += r
+	// 	}
+	// 	return 1 + stones
+	// }
+
+	// //모든 자릿수가 5 미만인 경우
+	// if isAllnumIsLessThanFive(numSlice) {
+	// 	var res int
+	// 	for _, n := range numSlice {
+	// 		res += n
+	// 	}
+	// 	return res
+	// }
+
+	// var candidates []int
+	// var can1 int
+	// for _, n := range numSlice {
+	// 	can1 += n
+	// }
+	// candidates = append(candidates, can1)
+
+	// nextNum := (numSlice[0] + 1) * int(math.Pow10(len(numSlice)-1))
+	// rem := nextNum - storey
+	// var remSum int
+	// for _, n := range getNumSliceFromStorey(rem) {
+	// 	remSum += n
+	// }
+	// can2 := numSlice[0] + 1 + remSum
+	// candidates = append(candidates, can2)
+
+	// nextPowNum := int(math.Pow10(len(numSlice)))
+	// powRem := nextPowNum - storey
+	// var powRemSum int
+	// for _, n := range getNumSliceFromStorey(powRem) {
+	// 	powRemSum += n
+	// }
+	// can3 := 1 + powRemSum
+	// candidates = append(candidates, can3)
+
+	// var minNum = candidates[0]
+	// for _, c := range candidates {
+	// 	if c < minNum {
+	// 		minNum = c
+	// 	}
+	// }
+	// return minNum
+
+}
+
+// func isAllnumIsGreaterOrEqualThanFive(numSlice []int) bool {
+// 	for _, n := range numSlice {
+// 		if n < 5 {
+// 			return false
+// 		}
+// 	}
+
+// 	return true
+// }
+
+// func isAllnumIsLessThanFive(numSlice []int) bool {
+// 	for _, n := range numSlice {
+// 		if n >= 5 {
+// 			return false
+// 		}
+// 	}
+
+// 	return true
+// }
+
+func getNumSliceFromStorey(storey int) []int {
+	numStrSlice := (strings.Split(strconv.Itoa(storey), ""))
+
+	var numSlice []int
+	for _, ns := range numStrSlice {
+		in, _ := strconv.Atoi(ns)
+		numSlice = append(numSlice, in)
+	}
+
+	return numSlice
+}
+
+func trimLogs(logs []int) []int {
+	var result []int
+
+	for index, log := range logs {
+		if log == 0 {
+			continue
+		}
+
+		if index > 0 {
+			prevAbs := int(math.Abs(float64(logs[index-1])))
+			currAbs := int(math.Abs(float64(logs[index])))
+
+			if (prevAbs == currAbs) && ((logs[index-1] < 0 && logs[index] > 0) || (logs[index-1] > 0 && logs[index] < 0)) {
+				continue
+			}
+			result = append(result, log)
+		}
+		result = append(result, log)
+		continue
+	}
+
+	return result
 
 }
 
@@ -110,70 +247,6 @@ func Solution(storey int) int {
 1) remainder가 있는 경우
 2) 없는 경우
 */
-
-// remainder가 생길지 안생길지 판단하는 함수
-func hasRemainder(numSlice []int) bool {
-	return numSlice[0] > 5 || (numSlice[0] <= 5 && numSlice[1] > 5)
-}
-
-func getRemainder(numSlice []int, storey int) int {
-	if numSlice[0] > 5 {
-		pow := int(math.Ceil(math.Log10(float64(storey))))
-		maxBtn := math.Pow10(pow)
-		return int(maxBtn) - storey
-	}
-
-	if numSlice[1] > 5 {
-		return (numSlice[1]+1)*int(math.Pow10(len(numSlice)-1)) - getNumFromSlice(numSlice)
-	}
-
-	return 0
-}
-
-func isAllnumIsGreaterOrEqualThanFive(numSlice []int) bool {
-	for _, n := range numSlice {
-		if n < 5 {
-			return false
-		}
-	}
-
-	return true
-}
-
-func isAllnumIsLessThanFive(numSlice []int) bool {
-	for _, n := range numSlice {
-		if n >= 5 {
-			return false
-		}
-	}
-
-	return true
-}
-
-func getNumSliceFromStorey(storey int) []int {
-	numStrSlice := (strings.Split(strconv.Itoa(storey), ""))
-
-	var numSlice []int
-	for _, ns := range numStrSlice {
-		in, _ := strconv.Atoi(ns)
-		numSlice = append(numSlice, in)
-	}
-
-	return numSlice
-}
-
-func getNumFromSlice(numSlice []int) int {
-	resStr := ""
-	for _, n := range numSlice {
-		resStr += strconv.Itoa(n)
-	}
-
-	n, err := strconv.Atoi(resStr)
-	if err != nil {
-		return 0
-	}
-	return n
-}
 
 /*경우의 수
 규칙 정리
