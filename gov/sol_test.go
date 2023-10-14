@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -27,7 +28,7 @@ func TestSolution(t *testing.T) {
 		},
 		{
 			input:  6628,
-			expect: 16,
+			expect: 15,
 		},
 		{
 			input:  99999,
@@ -39,10 +40,10 @@ func TestSolution(t *testing.T) {
 		},
 		{
 			input:  1273,
-			expect: 13,
+			expect: 10,
 		},
 		{
-			input:  1580,
+			input:  1580, //
 			expect: 8,
 		},
 		{
@@ -55,11 +56,19 @@ func TestSolution(t *testing.T) {
 		},
 		{
 			input:  9807,
-			expect: 14,
+			expect: 8,
 		},
 		{
 			input:  9007,
 			expect: 6,
+		},
+		{
+			input:  4545,
+			expect: 18,
+		},
+		{
+			input:  5555,
+			expect: 19,
 		},
 	}
 
@@ -68,7 +77,6 @@ func TestSolution(t *testing.T) {
 			t.Log(test.input, "@@@@@@@@@@@@@@@@@@")
 		}
 	}
-
 }
 
 func Solution(storey int) int {
@@ -79,8 +87,37 @@ func Solution(storey int) int {
 
 	numSlice := getNumSliceFromStorey(storey)
 
+	if isAllNine(numSlice) {
+		return 2
+	}
+
+	var candidates []int
+
+	candidates = append(candidates, getFirstCandidate(numSlice))
+	candidates = append(candidates, getSecondCandidate(numSlice, storey))
+
+	fmt.Println(candidates, "***")
+
+	var result = candidates[0]
+	for _, num := range candidates {
+		if num < result {
+			result = num
+		}
+	}
+
+	return result
+}
+
+// 일반적인 경우
+func getFirstCandidate(numSlice []int) int {
 	var logs []int
 	for index, num := range numSlice {
+		/*현재 자리가 5인 경우..
+				5이고 다음 자리가 5보다 작을 경우 빼줌
+		5이고 다음 자리가 없으면 빼줌.
+		5보다 작을 땐 빼줌
+		5보다 클 땐 값을 더하고 올림 해줌
+		*/
 		if num > 5 {
 			rem := 10 - num
 			logs = append(logs, -1*int(math.Pow10(len(numSlice)-index)))    //더 빼줌
@@ -89,7 +126,7 @@ func Solution(storey int) int {
 			logs = append(logs, -1*int(math.Pow10(len(numSlice)-1-index))*num)
 		}
 	}
-
+	fmt.Println(logs, "트림 전")
 	logs = trimLogs(logs)
 
 	var result int
@@ -102,95 +139,23 @@ func Solution(storey int) int {
 	}
 
 	return result
-
-	// //밑에꺼 다치워라.
-
-	// //만약에 숫자 중간 중간에 0이 껴있고 0 아닌 숫자들은 5이상이라면??
-	// //90807
-	// //9007
-	// //9807
-
-	// //모든 자릿수가 5 이상인 경우 또는 첫번째 자리 숫자가 5 이상인 경우
-	// /*
-	// 	첫번째 자리가 5이상인경우(다음10지수, 다음으로 큰 수 중에 비용이 적은 것을 선택)
-	// 		두번째자리가 5 이상인경우
-	// 		5739
-	// 		두번쨰자리가 5이하인경우
-	// 		5468
-	// 		=> 두번째 자리가 뭐가 되었든간에, 5 이상이라 다은 10지수로 계산하는게 제일 최소 비용이다.
-	// */
-	// if isAllnumIsGreaterOrEqualThanFive(numSlice) {
-	// 	rem := int(math.Pow10(len(numSlice))) - storey
-	// 	var stones int
-	// 	for _, r := range getNumSliceFromStorey(rem) {
-	// 		stones += r
-	// 	}
-	// 	return 1 + stones
-	// }
-
-	// //모든 자릿수가 5 미만인 경우
-	// if isAllnumIsLessThanFive(numSlice) {
-	// 	var res int
-	// 	for _, n := range numSlice {
-	// 		res += n
-	// 	}
-	// 	return res
-	// }
-
-	// var candidates []int
-	// var can1 int
-	// for _, n := range numSlice {
-	// 	can1 += n
-	// }
-	// candidates = append(candidates, can1)
-
-	// nextNum := (numSlice[0] + 1) * int(math.Pow10(len(numSlice)-1))
-	// rem := nextNum - storey
-	// var remSum int
-	// for _, n := range getNumSliceFromStorey(rem) {
-	// 	remSum += n
-	// }
-	// can2 := numSlice[0] + 1 + remSum
-	// candidates = append(candidates, can2)
-
-	// nextPowNum := int(math.Pow10(len(numSlice)))
-	// powRem := nextPowNum - storey
-	// var powRemSum int
-	// for _, n := range getNumSliceFromStorey(powRem) {
-	// 	powRemSum += n
-	// }
-	// can3 := 1 + powRemSum
-	// candidates = append(candidates, can3)
-
-	// var minNum = candidates[0]
-	// for _, c := range candidates {
-	// 	if c < minNum {
-	// 		minNum = c
-	// 	}
-	// }
-	// return minNum
-
 }
 
-// func isAllnumIsGreaterOrEqualThanFive(numSlice []int) bool {
-// 	for _, n := range numSlice {
-// 		if n < 5 {
-// 			return false
-// 		}
-// 	}
+func getSecondCandidate(numSlice []int, storey int) int {
+	//다음 큰 숫자를 구한다
+	nextNum := (numSlice[0] + 1) * int(math.Pow10(len(numSlice)-1))
+	rem := nextNum - storey
 
-// 	return true
-// }
+	var result int
 
-// func isAllnumIsLessThanFive(numSlice []int) bool {
-// 	for _, n := range numSlice {
-// 		if n >= 5 {
-// 			return false
-// 		}
-// 	}
+	result += numSlice[0] + 1
+	remSlice := getNumSliceFromStorey(rem)
+	for _, rnum := range remSlice {
+		result += rnum
+	}
 
-// 	return true
-// }
+	return result
+}
 
 func getNumSliceFromStorey(storey int) []int {
 	numStrSlice := (strings.Split(strconv.Itoa(storey), ""))
@@ -202,6 +167,16 @@ func getNumSliceFromStorey(storey int) []int {
 	}
 
 	return numSlice
+}
+
+func isAllNine(numSlice []int) bool {
+	for _, num := range numSlice {
+		if num != 9 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func trimLogs(logs []int) []int {
@@ -220,13 +195,12 @@ func trimLogs(logs []int) []int {
 				continue
 			}
 			result = append(result, log)
+		} else {
+			result = append(result, log)
 		}
-		result = append(result, log)
-		continue
 	}
 
 	return result
-
 }
 
 /*
