@@ -79,7 +79,7 @@ func TestSolution(t *testing.T) {
 	}
 }
 
-// 주어진 값이 0이 될 떄까지 실행
+// 주어진 값이 0이 될 떄까지 실행해야 하고 문제의 방향과 반대로 생각할 수있다.
 func Solution2(storey int) int {
 	var answer int
 	for {
