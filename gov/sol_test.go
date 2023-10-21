@@ -28,7 +28,7 @@ func TestSolution(t *testing.T) {
 		},
 		{
 			input:  6628,
-			expect: 15,
+			expect: 13,
 		},
 		{
 			input:  99999,
@@ -56,7 +56,7 @@ func TestSolution(t *testing.T) {
 		},
 		{
 			input:  9807,
-			expect: 8,
+			expect: 7,
 		},
 		{
 			input:  9007,
@@ -68,13 +68,40 @@ func TestSolution(t *testing.T) {
 		},
 		{
 			input:  5555,
-			expect: 19,
+			expect: 18,
 		},
 	}
 
 	for _, test := range tests {
-		if !assert.Equal(t, test.expect, Solution(test.input)) {
+		if !assert.Equal(t, test.expect, Solution2(test.input)) {
 			t.Log(test.input, "@@@@@@@@@@@@@@@@@@")
+		}
+	}
+}
+
+// 주어진 값이 0이 될 떄까지 실행
+func Solution2(storey int) int {
+	var answer int
+	for {
+		func() {
+			num := storey % 10
+			storey = storey / 10
+
+			if num == 5 && storey%10 >= 5 { //바로 앞자리가 5 이상인 경우
+				answer += 5
+				storey++
+			} else if num > 5 {
+				answer += 10 - num
+				storey++
+			} else if num < 5 {
+				answer += num
+			} else {
+				answer += 5
+			}
+		}()
+
+		if storey == 0 {
+			return answer
 		}
 	}
 }
@@ -113,7 +140,7 @@ func getFirstCandidate(numSlice []int) int {
 	var logs []int
 	for index, num := range numSlice {
 		/*현재 자리가 5인 경우..
-				5이고 다음 자리가 5보다 작을 경우 빼줌
+		5이고 다음 자리가 5보다 작을 경우 빼줌
 		5이고 다음 자리가 없으면 빼줌.
 		5보다 작을 땐 빼줌
 		5보다 클 땐 값을 더하고 올림 해줌
