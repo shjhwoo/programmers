@@ -50,7 +50,7 @@ func TestSolution(t *testing.T) {
 // 최소 길이 -> 최소 인덱스
 
 func Solution(sequence []int, k int) []int {
-	//슬라이딩 윈도우를 이용한 방법 => 고정된 크기라 안된다
+	//슬라이딩 윈도우를 이용한 방법 => 고정된 크기라    안된다
 	//투 포인터 패턴으로 접근하면 될거같다. https://butter-shower.tistory.com/226
 	var leftPointer int
 	var rightPointer int
