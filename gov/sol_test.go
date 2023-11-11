@@ -1,88 +1,95 @@
 package main_test
 
 import (
-	"slices"
+	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestCase struct {
-	sequence []int
-	k        int
-	expect   []int
+	weights []int
+	expect  int64
 }
 
 func TestSolution(t *testing.T) {
 
 	var tests = []TestCase{
 		{
-			sequence: []int{1, 2, 3, 4, 5},
-			k:        7,
-			expect:   []int{2, 3},
-		},
-		{
-			sequence: []int{1, 1, 1, 2, 3, 4, 5},
-			k:        5,
-			expect:   []int{6, 6},
-		},
-		{
-			sequence: []int{2, 2, 2, 2, 2},
-			k:        6,
-			expect:   []int{0, 2},
+			weights: []int{100, 180, 360, 100, 270},
+			expect:  int64(4),
 		},
 	}
 
 	for _, test := range tests {
-
-		if !assert.True(t, slices.Compare(test.expect, Solution(test.sequence, test.k)) == 0) {
-			t.Log(test.sequence, Solution(test.sequence, test.k), "@@@@@@@@@@@@@@@@@@")
-		}
+		assert.Equal(t, test.expect, Solution(test.weights))
 	}
 }
 
-//오름차순으로 정렬되어있음
-// * 최소길이
-// * 가장 빠른 인덱스
-// * 연속된 수열
-// * 리턴: 시작인덱스 끝 인덱스(두 경계 모두 포함)
-// 우선순위?
-// 최소 길이 -> 최소 인덱스
+func Solution(weights []int) int64 {
 
-func Solution(sequence []int, k int) []int {
-	//슬라이딩 윈도우를 이용한 방법 => 고정된 크기라 안된다
-	//투 포인터 패턴으로 접근하면 될거같다. https://butter-shower.tistory.com/226
-	var leftPointer int
-	var rightPointer int
+	var answer int64
 
-	idx, found := slices.BinarySearch(sequence, k)
-	if found {
-		return []int{idx, idx}
+	sort.Slice(weights, func(i, j int) bool {
+		return weights[i] < weights[j]
+	})
+
+	//순회한다
+	//현재 보고 있는 숫자 * 2, 숫자 * 3, 숫자 * 4  연산한다 ---- a,b,c
+	//a,b,c 숫자를 바이너리 서치로 찾는다
+	//찾을때마다 앤서에다가 1을 증가시켜준다
+
+	//그 숫자 이하의 범위 내에서만 for 문을 돈다.
+	for i := 0; i < len(weights); i++ {
+		target1 := 1 * weights[i]
+
+		fmt.Println(weights[i], "========================")
+
+		//찾을 때 이렇게만 찾으면 안되고 어디서 찾니 저 부분에 있는 숫자들도 2,3,4배수해서 찾아봐야해,,
+
+		//이진탐색
+		if binarySearch(target1, weights[i+1:]) {
+			answer++
+		}
+
 	}
-
-	var sum = sequence[0]
-
-	for sum != k {
-		if sum < k {
-			rightPointer++
-			sum = calculateSum(sum, sequence[rightPointer])
-			continue
-		}
-
-		if sum == k {
-			break
-		}
-
-		if sum > k {
-			sum = calculateSum(sum, -1*sequence[leftPointer])
-			leftPointer++
-			continue
-		}
-	}
-
-	return []int{leftPointer, rightPointer}
+	return answer
 }
 
-func calculateSum(sum int, addition int) int {
-	return sum + addition
+func binarySearch(pair int, weights []int) bool {
+	low := 0
+	high := len(weights) - 1
+
+	for low <= high {
+		median := (low + high) / 2
+
+		if weights[median] < pair {
+			low = median + 1
+		} else {
+			high = median - 1
+		}
+	}
+	fmt.Println(pair, "@@", weights, low)
+
+	if low == len(weights) || /*최소공배수를 구했고, 두 수가 모두 최소공배수가 되기 위해 어느 한쪽이 4보다 큰 수를 곱해야 한다면 탈락*/ {
+		return false
+	}
+
+	/*최소공배수를 구했고, 두 수가 모두 최소공배수가 되기 위해 2,3,4 중 하나의 숫자로 곱해서 만들 수 있을 경우에는*/
+	fmt.Println("찾음!")
+	return true
 }
+
+// func LCM(a, b int) int {
+// 	return a * b / GCD(a, b)
+// }
+
+// func GCD(a, b int) int {
+// 	for b != 0 {
+// 		t := b
+// 		b = a % b
+// 		a = t
+// 	}
+// 	return a
+// }
