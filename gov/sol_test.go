@@ -23,11 +23,11 @@ func TestSolution(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		assert.Equal(t, test.expect, Solution(test.weights))
+		assert.Equal(t, test.expect, solution(test.weights))
 	}
 }
 
-func Solution(weights []int) int64 {
+func solution(weights []int) int64 {
 
 	var answer int64
 
@@ -35,44 +35,77 @@ func Solution(weights []int) int64 {
 		return weights[i] < weights[j]
 	})
 
-	//순회한다
-	//현재 보고 있는 숫자 * 2, 숫자 * 3, 숫자 * 4  연산한다 ---- a,b,c
-	//a,b,c 숫자를 바이너리 서치로 찾는다
-	//찾을때마다 앤서에다가 1을 증가시켜준다
+	for i := 0; i < len(weights)-1; i++ {
+		cp1 := weights[i]
+		cp2 := weights[i] * 2
+		cp3 := weights[i] * 3
+		cp4 := weights[i] * 4
 
-	//그 숫자 이하의 범위 내에서만 for 문을 돈다.
-	for i := 0; i < len(weights); i++ {
-		target1 := 1 * weights[i]
-
-		fmt.Println(weights[i], "========================")
-
-		//찾을 때 이렇게만 찾으면 안되고 어디서 찾니 저 부분에 있는 숫자들도 2,3,4배수해서 찾아봐야해,,
-
-		//이진탐색
-		if binarySearch(target1, weights[i+1:]) {
+		//바이너리서치.
+		if binarySearch(cp1, weights[i+1:]) {
+			fmt.Println("페어 찾음", weights[i], cp1)
 			answer++
 		}
 
+		if binarySearch(cp2, weights[i+1:]) {
+			fmt.Println("페어 찾음", weights[i], cp2)
+			answer++
+		}
+
+		if binarySearch(cp3, weights[i+1:]) {
+			fmt.Println("페어 찾음", weights[i], cp3)
+			answer++
+		}
+
+		if binarySearch(cp4, weights[i+1:]) {
+			fmt.Println("페어 찾음", weights[i], cp4)
+			answer++
+		}
 	}
 	return answer
+}
+
+func LCM(a, b int) int {
+	return a * b / GCD(a, b)
+}
+
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
 }
 
 func binarySearch(pair int, weights []int) bool {
 	low := 0
 	high := len(weights) - 1
 
+	tar1 := pair
+	tar2 := pair * 2
+	tar3 := pair * 3
+	tar4 := pair * 4
+
 	for low <= high {
 		median := (low + high) / 2
 
-		if weights[median] < pair {
+		if weights[median] < tar1 {
 			low = median + 1
-		} else {
+		} 
+		// else if weights[median] < tar2 {
+		// 	low = median + 1
+		// } else if weights[median] < tar3 {
+		// 	low = median + 1
+		// } else if weights[median] < tar4 {
+		// 	low = median + 1
+		// } 
+		else {
 			high = median - 1
 		}
 	}
-	fmt.Println(pair, "@@", weights, low)
 
-	if low == len(weights) || /*최소공배수를 구했고, 두 수가 모두 최소공배수가 되기 위해 어느 한쪽이 4보다 큰 수를 곱해야 한다면 탈락*/ {
+	if low == len(weights) { //다 뒤져도 못 찾음.
 		return false
 	}
 
@@ -80,16 +113,3 @@ func binarySearch(pair int, weights []int) bool {
 	fmt.Println("찾음!")
 	return true
 }
-
-// func LCM(a, b int) int {
-// 	return a * b / GCD(a, b)
-// }
-
-// func GCD(a, b int) int {
-// 	for b != 0 {
-// 		t := b
-// 		b = a % b
-// 		a = t
-// 	}
-// 	return a
-// }
