@@ -1,115 +1,97 @@
 package main_test
 
 import (
-	"fmt"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestCase struct {
-	weights []int
-	expect  int64
+	numbers []int
+	expect  []int
 }
 
 func TestSolution(t *testing.T) {
 
 	var tests = []TestCase{
 		{
-			weights: []int{100, 180, 360, 100, 270},
-			expect:  int64(4),
+			numbers: []int{2, 3, 3, 5},
+			expect:  []int{3, 5, 5, -1},
+		},
+		{
+			numbers: []int{9, 1, 5, 3, 6, 2},
+			expect:  []int{-1, 5, 6, 6, -1, -1},
 		},
 	}
 
 	for _, test := range tests {
-		assert.Equal(t, test.expect, solution(test.weights))
+		if !assert.True(t, slices.Compare(test.expect, solution(test.numbers)) == 0) {
+			t.Log(solution(test.numbers))
+		}
 	}
 }
 
-func solution(weights []int) int64 {
+func solution(numbers []int) []int {
+	/*
+		모든 경우의 수
+		원소가 1개인 경우 [-1]
+		마지막 원소는 항상 -1이다
+		이 원소가 1이면 무조건 바로 뒷 수가 뒷 큰수가 된다
 
-	var answer int64
 
-	sort.Slice(weights, func(i, j int) bool {
-		return weights[i] < weights[j]
-	})
+		배열을 순회할 수밖엔는 없다
 
-	for i := 0; i < len(weights)-1; i++ {
-		cp1 := weights[i]
-		cp2 := weights[i] * 2
-		cp3 := weights[i] * 3
-		cp4 := weights[i] * 4
+		그런데 그 원소에 대해서 뒤 나머지 숫자와 비교를 어떻게 하느냐가 문제
 
-		//바이너리서치.
-		if binarySearch(cp1, weights[i+1:]) {
-			fmt.Println("페어 찾음", weights[i], cp1)
-			answer++
-		}
+		n번째 원소에 대해서:
 
-		if binarySearch(cp2, weights[i+1:]) {
-			fmt.Println("페어 찾음", weights[i], cp2)
-			answer++
-		}
+		뒤 큰 수 찾는 법
+		다음 수 - 현재 수 = 양수 .. 로 나오는 게 처음이다. 그러면 이게 뒷 큰수
+		그게 처음이라는거 어떻게 알아.
+		카운터를 만들어줘야겠지
+		카운터가 0에서 1이 되는 순간에 스탑하고. 다음 순회로 넘어가면 되지않니?
 
-		if binarySearch(cp3, weights[i+1:]) {
-			fmt.Println("페어 찾음", weights[i], cp3)
-			answer++
-		}
 
-		if binarySearch(cp4, weights[i+1:]) {
-			fmt.Println("페어 찾음", weights[i], cp4)
-			answer++
-		}
+		n+1번부터 마지막까지의 원소 중 가장 큰 수를 저장한다.
+		그러면, 그 큰 수
+		이전 지점까지는:
+			이전 지점 중, 큰수 직전까지 계속 하강하는 구간에서는 가장 큰수로 통일 가능
+		이후 지점부터는:
+			계속 하강하는 구간이라면 -1로 통일 가능
+	*/
+
+	if len(numbers) == 1 {
+		return []int{-1}
 	}
+
+	var answer []int
+
+	for i := 0; i < len(numbers)-1; i++ {
+		found := 0
+
+		for j := i + 1; j < len(numbers); j++ {
+			if numbers[i] < numbers[j] {
+				found = 1
+				answer = append(answer, numbers[j])
+				break
+			}
+		}
+
+		if found == 0 {
+			answer = append(answer, -1)
+		}
+
+	}
+
+	answer = append(answer, -1)
+
 	return answer
 }
 
-func LCM(a, b int) int {
-	return a * b / GCD(a, b)
-}
-
-func GCD(a, b int) int {
-	for b != 0 {
-		t := b
-		b = a % b
-		a = t
-	}
-	return a
-}
-
-func binarySearch(pair int, weights []int) bool {
-	low := 0
-	high := len(weights) - 1
-
-	tar1 := pair
-	tar2 := pair * 2
-	tar3 := pair * 3
-	tar4 := pair * 4
-
-	for low <= high {
-		median := (low + high) / 2
-
-		if weights[median] < tar1 {
-			low = median + 1
-		} 
-		// else if weights[median] < tar2 {
-		// 	low = median + 1
-		// } else if weights[median] < tar3 {
-		// 	low = median + 1
-		// } else if weights[median] < tar4 {
-		// 	low = median + 1
-		// } 
-		else {
-			high = median - 1
-		}
-	}
-
-	if low == len(weights) { //다 뒤져도 못 찾음.
-		return false
-	}
-
-	/*최소공배수를 구했고, 두 수가 모두 최소공배수가 되기 위해 2,3,4 중 하나의 숫자로 곱해서 만들 수 있을 경우에는*/
-	fmt.Println("찾음!")
-	return true
-}
+/*
+테스트 20 〉	실패 (시간 초과)
+테스트 21 〉	실패 (시간 초과)
+테스트 22 〉	실패 (시간 초과)
+테스트 23 〉	실패 (시간 초과)
+*/
