@@ -111,11 +111,36 @@ func solution(numbers []int) []int {
 			   --------------
 			   1 - 5 - 2 : 5 있다
 			   --------------
-			   5 - 3 - 2 : 6 없다
+			   5 - 3 - 2 : - 없다
 			   5 - 6 - 6 : 6 있다
 			   ------------------
 			   3 - 6 - 2 : 6 있다
 
+			   => 두개의 포인터를 각각 왼쪽과 오른쪽에서 출발시킨다.
+			   다음의 경우로 나뉘겠지.
+			   1) 두개의 포인터를 포함한 범위에 있는 숫자의 개수가 홀수인 경우 => 최종적으로는 가운데에서 만난다
+			    포인터가 안 겹칠 때까지는>>
+			   	왼쪽 > 오른쪽 : 왼쪽수와 현재수를 비교
+				왼쪽 < 오른쪽 : 뒷 큰수 찾기 위해 왼쪽 포인터만 이동시킨다
+				왼쪽 = 오른쪽 :
+					이 수가 현재 수보다 크다: 왼쪽 수가 뒷 큰수 | 작거나 같다: 왼쪽, 오른쪽 이동
+
+				포인터가 겹칠때까지 못 찾았다>>>
+				현재 수보다 크다: 결정 완
+				현재 수보다 작거나 같다: -1
+
+			   2) 두개의 포인터를 포함한 범위에 있는 숫자의 개수가 짝수인 경우 => 가운데에서 만날 수 없다.
+			   포인터가 가운데 지점에서 만나기 직전까지는 >>>
+			   	왼쪽 > 오른쪽 : 왼쪽수와 현재수를 비교
+				왼쪽 < 오른쪽 : 뒷 큰수 찾기 위해 왼쪽 포인터만 이동시킨다
+				왼쪽 = 오른쪽 :
+					이 수가 현재 수보다 크다: 왼쪽 수가 뒷 큰수 | 작거나 같다: 왼쪽, 오른쪽 이동
+
+				포인터가 이웃하게 될 때까지 못 찾았다
+			   	왼쪽 > 오른쪽 : 왼쪽수와 현재수를 비교
+				왼쪽 < 오른쪽 : 뒷 큰수 찾기 위해 왼쪽 포인터만 이동시킨다
+				왼쪽 = 오른쪽 :
+					이 수가 현재 수보다 크다: 왼쪽 수가 뒷 큰수 | 작거나 같다: -1
 	*/
 
 	var answer []int
@@ -134,15 +159,86 @@ func solution(numbers []int) []int {
 			endPoint = cache[i-1] + 1
 		}
 
-		for j := i + 1; j < endPoint; j++ {
-			if numbers[i] < numbers[j] {
-				cache[i] = j //일단 캐시에다가 저장해!
+		var lp = i + 1
+		var rp = endPoint - 1
 
-				found = 1
+		for lp <= rp {
+			if (rp-lp+1)%2 == 1 {
+				if lp == rp {
+					if numbers[lp] > numbers[i] {
+						cache[i] = lp
+						found = 1
+						answer = append(answer, numbers[lp])
+						break
+					} else {
+						answer = append(answer, -1)
+						break
+					}
+				} else {
+					if numbers[lp] > numbers[rp] {
+						if numbers[lp] > numbers[i] {
+							cache[i] = lp
+							found = 1
+							answer = append(answer, numbers[lp])
+							break
+						} else {
+							lp++
+						}
+					}
 
-				answer = append(answer, numbers[j])
-				break
+					if numbers[lp] < numbers[rp] {
+						lp++
+					}
+
+					if numbers[lp] == numbers[rp] {
+						if numbers[lp] > numbers[i] {
+							answer = append(answer, numbers[lp])
+							found = 1
+							cache[i] = lp
+							break
+						} else {
+							lp++
+							rp--
+						}
+					}
+				}
+
 			}
+
+			if (rp-lp+1)%2 == 0 {
+				if numbers[lp] > numbers[rp] {
+					if numbers[lp] > numbers[i] {
+						cache[i] = lp
+						found = 1
+						answer = append(answer, numbers[lp])
+						break
+					} else {
+						lp++
+					}
+				}
+
+				if numbers[lp] < numbers[rp] {
+					lp++
+				}
+
+				if numbers[lp] == numbers[rp] {
+					if numbers[lp] > numbers[i] {
+						answer = append(answer, numbers[lp])
+						found = 1
+						cache[i] = lp
+						break
+					} else {
+						if rp-lp == 1 {
+							answer = append(answer, -1)
+							break
+						} else {
+							lp++
+							rp--
+						}
+					}
+				}
+			}
+
 		}
 
 		if found == 0 {
