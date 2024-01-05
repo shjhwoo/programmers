@@ -36,42 +36,9 @@ func solution(numbers []int) []int {
 
 	var answer []int
 
-	var cache = make(map[int]int) //현재수의 인덱스 - 뒷 큰수에 대한 인덱스.
+	var maxNumStack []int
 
-	for i := 0; i < len(numbers)-1; i++ {
-		found := 0
-
-		//어디까지 돌건지 결정하는 지점.
-		var endPoint int
-		//만약에 맨 처음이거나, 뒷 큰수가 없거나, 뒷 큰수가 있는데 인덱스가 지금 수와 같으면! 그냥 배열 마지막까지 다 봐야 해.
-		if cache[i-1] == -1 || cache[i-1] == 0 || i == cache[i-1] {
-			endPoint = len(numbers)
-		} else {
-			endPoint = cache[i-1] + 1
-		}
-
-		var lp = i + 1
-		var rp = endPoint - 1
-
-		for lp <= rp {
-			if numbers[lp] > numbers[i] {
-				cache[i] = lp
-				found = 1
-				answer = append(answer, numbers[lp])
-				break
-			} else {
-				if (rp-lp+1)%2 == 1 && lp == rp {
-					break
-				} else {
-					lp++
-					continue
-				}
-			}
-		}
-
-		if found == 0 {
-			answer = append(answer, -1)
-		}
+	for i := len(numbers); i >= 0; i-- {
 
 	}
 
@@ -85,6 +52,26 @@ func solution(numbers []int) []int {
 테스트 21 〉	실패 (시간 초과)
 테스트 22 〉	실패 (시간 초과)
 테스트 23 〉	실패 (시간 초과)
+
+일단 뒤에서 부터 일종의 최대값 모음을 만들었습니다.
+
+가장 마지막 값은 어짜피 -1 이죠.
+그리고 마지막 부터 시작하면 마지막 값은 최초의 최대 값 입니다.
+
+이 값 부터 하나씩 최대값을 쌓아 나가는게 첫번째 룰입니다.
+[2,3,4,5,5,6,7] 이라는 배열이 있으면
+7,6,5,4,3,2 로 쌓이는거죠.
+
+두번째 룰은 중간에 그동안 쌓인 배열보다 큰 값이 있으면 기존 값 중 작은 값은 뭉개집니다.
+[2,3,6,4,5,6,7] 이라는 배열이 있으면
+7,6,5,4 까지 쌓인 다음에 7,6 이 되고, 다시 7,6,3,2 가 쌓이게 되는거죠.
+
+이러면 비교할 비교 배열의 길이가 확 줄어들게 됩니다.
+
+세번째는 트릭인데 작은쪽에서 큰쪽으로 비교하면 시간 제한에 걸리고,
+큰쪽에서 작은쪽으로 비교하면 시간 제한에 걸리지 않습니다...크크
+
+20번 문제 배열 형태가 이 부분을 막는 배열인거 같더군요.
 */
 
 /*
@@ -143,6 +130,8 @@ func solution(numbers []int) []int {
 
 		   그러면 이 경우는?
 		   10,9,8,7,5,4,3,2,1
+
+		   10,9,9,9,9,9,8,7,13,14,15,16
 
 		   죄다 -1이거든..
 
