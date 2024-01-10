@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,29 +29,49 @@ func TestSolution(t *testing.T) {
 // 2016년 1월 1일은 금요일 (SUN,MON,TUE,WED,THU,FRI,SAT)
 // 윤년이므로 366일이라고 가정한다.
 
-var cache = map[int]string{
-	1: "SUN",
+var cache = map[string]string{
+	"1:1": "FRI",
 }
 
 func solution(a int, b int) string {
 	if a == 1 {
 		if b == 1 {
-			return cache[a]
+			return cache["1:1"]
 		} else {
-			return getDateString((b - 1) % 7)
+			baseIdxOfFirstDay := dateBaseIdxMap[cache["1:1"]]
+			gap := (b - 1) % 7
+			nextDateString := getNextDateString(baseIdxOfFirstDay, gap)
+
+			if b == getDaysInMonth(1) {
+				cache["1:31"] = nextDateString
+			}
+
+			return nextDateString
 		}
 	} else {
-		//2월 ~ 12월!
-
-		//구하려는 일자의 달의 이전 달 마지막 날짜에 대한 요일 정보를 조회한다.
-		prevMonthLastDateString := solution(a-1, getDaysInMonth(a-1))
-		currentMonthFirstDateString := getNextDateString(prevMonthLastDateString)
-
-		if b == 1 {
-			return currentMonthFirstDateString
-		} else {
-			return getDateString((b - 1) % 7)
+		if b == getDaysInMonth(a) {
+			solution(a, 1)
 		}
+		////
+
+		//2월 ~ 12월!
+		//구하려는 일자의 달의 이전 달 마지막 날짜에 대한 요일 정보를 조회한다.
+		daysInLastMonth := getDaysInMonth(a - 1)
+		lastDateOfLastMonth := solution(a-1, daysInLastMonth)
+		baseIdx := dateBaseIdxMap[lastDateOfLastMonth]
+		firstDateOfCurrentMonth := getNextDateString(baseIdx, 1)
+
+		key := fmt.Sprintf("%d:1", a)
+		cache[key] = firstDateOfCurrentMonth
+		baseIdxOfCurrentMonth := dateBaseIdxMap[firstDateOfCurrentMonth]
+		gap := (b - 1) % 7
+		nextDateString := getNextDateString(baseIdxOfCurrentMonth, gap)
+
+		if b == getDaysInMonth(a) {
+			cache[fmt.Sprintf("%d:%d", a, b)] = nextDateString
+		}
+
+		return nextDateString
 	}
 }
 
@@ -84,44 +105,29 @@ func solution(a int, b int) string {
 
 */
 
-func getDateString(remainder int) string {
-	switch remainder {
-	case 0:
-		return "FRI"
-	case 1:
-		return "SAT"
-	case 2:
-		return "SUN"
-	case 3:
-		return "MON"
-	case 4:
-		return "TUE"
-	case 5:
-		return "WED"
-	case 6:
-		return "THU"
-	}
-	return ""
+var dateBaseIdxMap = map[string]int{
+	"MON": 0,
+	"TUE": 1,
+	"WED": 2,
+	"THU": 3,
+	"FRI": 4,
+	"SAT": 5,
+	"SUN": 6,
 }
+var dateString = []string{"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"}
 
-func getNextDateString(date string) string {
-	switch date {
-	case "MON":
-		return "TUE"
-	case "TUE":
-		return "WED"
-	case "WED":
-		return "THU"
-	case "THU":
-		return "FRI"
-	case "FRI":
-		return "SAT"
-	case "SAT":
-		return "SUN"
-	case "SUN":
-		return "MON"
+func getNextDateString(currentDateBaseIdx, gap int) string {
+
+	nextDateIdx := currentDateBaseIdx + gap
+
+	if nextDateIdx < 7 {
+		return dateString[nextDateIdx]
 	}
-	return ""
+	//일요일 => 3일 뒤면 : 3 - (7 - 6) = 인덱스 2
+	//토요일 => 3일 뒤면 : 3 - (7 - 5) = 인덱스 1
+	//금요일 => 6일 뒤면 : 6 - (7 - 4) = 인덱스 3
+	over := 7 - currentDateBaseIdx
+	return dateString[gap-over]
 }
 
 func getDaysInMonth(month int) int {
