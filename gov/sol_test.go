@@ -1,42 +1,71 @@
 package main_test
 
 import (
+	"slices"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestCase struct {
-	inputs string
-	expect string
+	arr     []int
+	divisor int
+	expect  []int
 }
 
 func TestSolution(t *testing.T) {
 
 	var tests = []TestCase{
 		{
-			inputs: "abcde",
-			expect: "c",
+			arr:     []int{5, 9, 7, 10},
+			divisor: 5,
+			expect:  []int{5, 10},
 		},
 		{
-			inputs: "qwer",
-			expect: "we",
+			arr:     []int{2, 36, 1, 3},
+			divisor: 1,
+			expect:  []int{1, 2, 3, 36},
+		},
+		{
+			arr:     []int{3, 2, 6},
+			divisor: 10,
+			expect:  []int{-1},
 		},
 	}
 
 	for _, test := range tests {
-		assert.Equal(t, test.expect, solution(test.inputs))
+		ans := solution(test.arr, test.divisor)
+		if !assert.True(t, slices.Equal(test.expect, ans)) {
+			t.Log(test.arr, ans)
+		}
 	}
 }
 
-func solution(s string) string {
-	//짝수인 경우  0123 => 12  01234567 => 34
-	if len(s)%2 == 0 {
-		start := len(s)/2 - 1
-		end := len(s) / 2
-		return s[start : end+1]
+func solution(arr []int, divisor int) []int {
+	if divisor == 1 {
+		sort.Slice(arr, func(i, j int) bool {
+			return arr[i] < arr[j]
+		})
+
+		return arr
 	}
-	//홀수인 경우
-	mid := len(s) / 2
-	return s[mid : mid+1]
+
+	var answer []int
+
+	for _, num := range arr {
+		if num >= divisor && num%divisor == 0 {
+			answer = append(answer, num)
+		}
+	}
+
+	if len(answer) == 0 {
+		return []int{-1}
+	}
+
+	sort.Slice(answer, func(i, j int) bool {
+		return answer[i] < answer[j]
+	})
+
+	return answer
 }
