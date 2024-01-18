@@ -3,13 +3,17 @@ package main
 import "fmt"
 
 func main() {
-	var result = Solution(16)
-	fmt.Println("최종 결과값", result)
+	var a, b int
+	fmt.Scan(&a, &b)
 
-	var result2 = Solution(1)
-	fmt.Println("최종 결과값", result2)
-}
+	line := ""
+	for i := 0; i < a; i++ {
+		line += "*"
+	}
 
-func Solution(storey int) int {
-	return 0
+	for j := 0; j < b; j++ {
+		fmt.Println(line)
+	}
+
+	//fmt.Println(a + b)
 }
