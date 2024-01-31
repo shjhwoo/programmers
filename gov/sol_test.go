@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -8,49 +9,65 @@ import (
 )
 
 type TestCase struct {
-	input  string
-	expect string
+	inputT string
+	inputP string
+	expect int
 }
 
 func TestSolution(t *testing.T) {
 
 	var tests = []TestCase{
 		{
-			input:  "try hello world",
-			expect: "TrY HeLlO WoRlD",
+			inputT: "3141592",
+			inputP: "271",
+			expect: 2,
 		},
 		{
-			input:  "try he           llo wor      ld",
-			expect: "TrY He           LlO WoR      Ld",
+			inputT: "500220839878",
+			inputP: "7",
+			expect: 8,
+		},
+		{
+			inputT: "10203",
+			inputP: "15",
+			expect: 3,
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.input)
+		ans := solution(test.inputT, test.inputP)
 		assert.Equal(t, test.expect, ans)
 	}
 }
 
-func solution(s string) string {
-	var reversedWordSlice = []string{}
+func solution(t string, p string) int {
+	var answer int
 
-	words := strings.Split(s, " ")
-	for _, word := range words {
-		var reversed string
-		for idx, char := range strings.Split(word, "") {
-			if char == " " {
-				reversed += char
-				idx--
-			} else {
-				if idx == 0 || idx%2 == 0 {
-					reversed += strings.ToUpper(char)
-				} else {
-					reversed += strings.ToLower(char)
-				}
-			}
+	subStringSize := len(p)
+
+	pn := stringToNum(p)
+
+	for i, ns := range strings.Split(t, "") {
+		if i == (len(t) - subStringSize + 1) {
+			break
 		}
-		reversedWordSlice = append(reversedWordSlice, reversed)
+
+		//첫번째 자리 숫자가 크면 패스
+		if stringToNum(string(ns)) > stringToNum(p[0:1]) {
+			continue
+		}
+
+		//그 외에는 탐색가능.
+		if stringToNum(t[i:i+subStringSize]) <= pn {
+			answer++
+		}
+
 	}
 
-	return strings.Join(reversedWordSlice, " ")
+	return answer
+}
+
+func stringToNum(strNum string) int {
+	n, _ := strconv.Atoi(strNum)
+	return n
 }
