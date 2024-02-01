@@ -1,16 +1,13 @@
 package main_test
 
 import (
-	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestCase struct {
-	inputT string
-	inputP string
+	input  []int
 	expect int
 }
 
@@ -18,56 +15,54 @@ func TestSolution(t *testing.T) {
 
 	var tests = []TestCase{
 		{
-			inputT: "3141592",
-			inputP: "271",
+			input:  []int{-2, 3, 0, 2, -5},
 			expect: 2,
 		},
 		{
-			inputT: "500220839878",
-			inputP: "7",
-			expect: 8,
+			input:  []int{-3, -2, -1, 0, 1, 2, 3},
+			expect: 5,
 		},
 		{
-			inputT: "10203",
-			inputP: "15",
-			expect: 3,
+			input:  []int{-1, 1, -1, 1},
+			expect: 0,
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.inputT, test.inputP)
+		ans := solution(test.input)
 		assert.Equal(t, test.expect, ans)
 	}
 }
 
-func solution(t string, p string) int {
+func solution(number []int) int {
 	var answer int
 
-	subStringSize := len(p)
+	/*
+		0번째 + 1번째 + 2번째
+		0번째 + 1번째 + 3번째
+		0번째 + 1번째 + ...
+		0번째 + 1번째 + 마지막 원소.
 
-	pn := stringToNum(p)
+		0번째 + 2번째 + 3번째
+		...
 
-	for i, ns := range strings.Split(t, "") {
-		if i == (len(t) - subStringSize + 1) {
-			break
+	*/
+
+	for i := 0; i < len(number); i++ {
+		firstPrson := number[i]
+
+		for j := i + 1; j < len(number); j++ {
+			secondPrson := number[j]
+
+			for k := j + 1; k < len(number); k++ {
+				thirdPrson := number[k]
+
+				if firstPrson+secondPrson+thirdPrson == 0 {
+					answer++
+				}
+			}
 		}
-
-		//첫번째 자리 숫자가 크면 패스
-		if stringToNum(string(ns)) > stringToNum(p[0:1]) {
-			continue
-		}
-
-		//그 외에는 탐색가능.
-		if stringToNum(t[i:i+subStringSize]) <= pn {
-			answer++
-		}
-
 	}
 
 	return answer
-}
-
-func stringToNum(strNum string) int {
-	n, _ := strconv.Atoi(strNum)
-	return n
 }
