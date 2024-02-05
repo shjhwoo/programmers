@@ -1,68 +1,123 @@
 package main_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestCase struct {
-	input  []int
-	expect int
+	inputS string
+	inputN int
+	expect string
 }
 
 func TestSolution(t *testing.T) {
 
 	var tests = []TestCase{
 		{
-			input:  []int{-2, 3, 0, 2, -5},
-			expect: 2,
+			inputS: "AB",
+			inputN: 1,
+			expect: "BC",
 		},
 		{
-			input:  []int{-3, -2, -1, 0, 1, 2, 3},
-			expect: 5,
+			inputS: "z",
+			inputN: 1,
+			expect: "a",
 		},
 		{
-			input:  []int{-1, 1, -1, 1},
-			expect: 0,
+			inputS: "a B z",
+			inputN: 4,
+			expect: "e F d",
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.input)
+		ans := solution(test.inputS, test.inputN)
 		assert.Equal(t, test.expect, ans)
 	}
 }
 
-func solution(number []int) int {
-	var answer int
+func solution(s string, n int) string {
+	var runes = strings.Split(s, "")
 
-	/*
-		0번째 + 1번째 + 2번째
-		0번째 + 1번째 + 3번째
-		0번째 + 1번째 + ...
-		0번째 + 1번째 + 마지막 원소.
+	var answerRunes []string
 
-		0번째 + 2번째 + 3번째
-		...
-
-	*/
-
-	for i := 0; i < len(number); i++ {
-		firstPrson := number[i]
-
-		for j := i + 1; j < len(number); j++ {
-			secondPrson := number[j]
-
-			for k := j + 1; k < len(number); k++ {
-				thirdPrson := number[k]
-
-				if firstPrson+secondPrson+thirdPrson == 0 {
-					answer++
-				}
-			}
+	for _, char := range runes {
+		if char == " " {
+			answerRunes = append(answerRunes, char)
+			continue
 		}
+		answerRunes = append(answerRunes, encryptChar(char, n))
 	}
 
-	return answer
+	return strings.Join(answerRunes, "")
+}
+
+var weakAlphabets = "abcdefghijklmnopqrstuvwxyz"
+
+var alpMap = map[string]int{
+	"a": 0,
+	"b": 1,
+	"c": 2,
+	"d": 3,
+	"e": 4,
+	"f": 5,
+	"g": 6,
+	"h": 7,
+	"i": 8,
+	"j": 9,
+	"k": 10,
+	"l": 11,
+	"m": 12,
+	"n": 13,
+	"o": 14,
+	"p": 15,
+	"q": 16,
+	"r": 17,
+	"s": 18,
+	"t": 19,
+	"u": 20,
+	"v": 21,
+	"w": 22,
+	"x": 23,
+	"y": 24,
+	"z": 25,
+}
+
+/*
+x + 8 인경우 => yzabcdef : 26에서 x의 인덱스를 뺀 값* 이거를 8에서 뺌 : n - (26 - xidx)
+
+z + 25 == 51인 경우 => 25 - (26-26) = 25
+z + 1 == 27 =>
+*/
+
+func encryptChar(s string, n int) string {
+
+	oriIdx := alpMap[strings.ToLower(s)]
+
+	newIdx := oriIdx + n
+
+	if newIdx < 26 {
+		c := weakAlphabets[newIdx : newIdx+1]
+		if IsStrongChar(s) {
+			return strings.ToUpper(c)
+		}
+		return c
+	}
+
+	c := weakAlphabets[n-(26-oriIdx) : n-(26-oriIdx)+1]
+	if IsStrongChar(s) {
+		return strings.ToUpper(c)
+	}
+	return c
+}
+
+func IsStrongChar(char string) bool {
+	return strings.ToUpper(char) == char
+}
+
+func IsWeakChar(char string) bool {
+	return strings.ToLower(char) == char
 }
