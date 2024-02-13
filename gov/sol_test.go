@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -9,115 +10,86 @@ import (
 
 type TestCase struct {
 	inputS string
-	inputN int
-	expect string
+	expect []int
 }
 
 func TestSolution(t *testing.T) {
 
 	var tests = []TestCase{
 		{
-			inputS: "AB",
-			inputN: 1,
-			expect: "BC",
+			inputS: "banana",
+			expect: []int{-1, -1, -1, 2, 2, 2},
 		},
 		{
-			inputS: "z",
-			inputN: 1,
-			expect: "a",
-		},
-		{
-			inputS: "a B z",
-			inputN: 4,
-			expect: "e F d",
+			inputS: "foobar",
+			expect: []int{-1, -1, 1, -1, -1, -1},
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.inputS, test.inputN)
-		assert.Equal(t, test.expect, ans)
+		ans := solution(test.inputS)
+
+		t.Log(ans, "계산값")
+
+		assert.True(t, slices.Equal(test.expect, ans))
 	}
 }
 
-func solution(s string, n int) string {
-	var runes = strings.Split(s, "")
+func solution(s string) []int {
+	var answer []int
 
-	var answerRunes []string
+	if len(s) == 1 {
+		return []int{-1}
+	}
 
-	for _, char := range runes {
-		if char == " " {
-			answerRunes = append(answerRunes, char)
-			continue
+	for idx, ch := range strings.Split(s, "") {
+		if idx == 0 {
+			answer = append(answer, -1)
+		} else {
+			prevChs := strings.Split(s[0:idx], "")
+			idxOfClosestCh := findIdxOfClosestPrevCh(prevChs, ch)
+
+			if idxOfClosestCh == -1 {
+				answer = append(answer, -1)
+				continue
+			}
+
+			a := idx - idxOfClosestCh
+			answer = append(answer, a)
 		}
-		answerRunes = append(answerRunes, encryptChar(char, n))
 	}
 
-	return strings.Join(answerRunes, "")
+	return answer
 }
 
-var weakAlphabets = "abcdefghijklmnopqrstuvwxyz"
+func findIdxOfClosestPrevCh(prevChs []string, currentCh string) int {
+	var result = -1
 
-var alpMap = map[string]int{
-	"a": 0,
-	"b": 1,
-	"c": 2,
-	"d": 3,
-	"e": 4,
-	"f": 5,
-	"g": 6,
-	"h": 7,
-	"i": 8,
-	"j": 9,
-	"k": 10,
-	"l": 11,
-	"m": 12,
-	"n": 13,
-	"o": 14,
-	"p": 15,
-	"q": 16,
-	"r": 17,
-	"s": 18,
-	"t": 19,
-	"u": 20,
-	"v": 21,
-	"w": 22,
-	"x": 23,
-	"y": 24,
-	"z": 25,
-}
-
-/*
-x + 8 인경우 => yzabcdef : 26에서 x의 인덱스를 뺀 값* 이거를 8에서 뺌 : n - (26 - xidx)
-
-z + 25 == 51인 경우 => 25 - (26-26) = 25
-z + 1 == 27 =>
-*/
-
-func encryptChar(s string, n int) string {
-
-	oriIdx := alpMap[strings.ToLower(s)]
-
-	newIdx := oriIdx + n
-
-	if newIdx < 26 {
-		c := weakAlphabets[newIdx : newIdx+1]
-		if IsStrongChar(s) {
-			return strings.ToUpper(c)
+	for idx, ch := range prevChs {
+		if ch == currentCh {
+			if result < idx {
+				result = idx
+			}
 		}
-		return c
 	}
 
-	c := weakAlphabets[n-(26-oriIdx) : n-(26-oriIdx)+1]
-	if IsStrongChar(s) {
-		return strings.ToUpper(c)
+	return result
+}
+
+// 맵을 써서 뭉개버린다.: 이중 for 문 회피기법
+func solution2(s string) []int {
+	m := make(map[string]int)
+	var res []int
+
+	for i := range s {
+		val, ok := m[string(s[i])]
+		if !ok {
+			m[string(s[i])] = i
+			res = append(res, -1)
+		} else {
+			m[string(s[i])] = i
+			res = append(res, i-val)
+		}
 	}
-	return c
-}
-
-func IsStrongChar(char string) bool {
-	return strings.ToUpper(char) == char
-}
-
-func IsWeakChar(char string) bool {
-	return strings.ToLower(char) == char
+	return res
 }
