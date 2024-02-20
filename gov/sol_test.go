@@ -1,63 +1,50 @@
 package main_test
 
 import (
-	"fmt"
+	"slices"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestCase struct {
-	inputS []int
-	expect string
+	array    []int
+	commands [][]int
+	expect   []int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			inputS: []int{1, 3, 4, 6},
-			expect: "1223330333221",
-		},
-		{
-			inputS: []int{1, 7, 1, 2},
-			expect: "111303111",
+			array:    []int{1, 5, 2, 6, 3, 7, 4},
+			commands: [][]int{{2, 5, 3}, {4, 4, 1}, {1, 7, 3}},
+			expect:   []int{5, 6, 3},
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.inputS)
-
+		ans := solution(test.array, test.commands)
 		t.Log(ans, "계산값")
-
-		assert.Equal(t, test.expect, ans)
+		assert.True(t, slices.Equal(test.expect, ans))
 	}
 }
 
-func solution(food []int) string {
-	var player1 string
+func solution(array []int, commands [][]int) []int {
 
-	for idx, fo := range food {
-		if idx == 0 || fo == 1 {
-			continue
-		}
+	//자른다
+	var answer []int
+	for _, command := range commands {
+		start := command[0] - 1
+		end := command[1]
 
-		repeat := fo / 2
-		var i int
-		for i < repeat {
-			player1 += fmt.Sprintf("%d", idx)
-			i++
-		}
-	}
+		var sliced []int
+		part := array[start:end] //새로운 곳에 복사해야함
+		sliced = append(sliced, part...)
 
-	player2 := getReversedString(player1)
-
-	return fmt.Sprintf("%s0%s", player1, player2)
-}
-
-func getReversedString(pst string) string {
-	var answer string
-	for i := len(pst) - 1; i > -1; i-- {
-		answer += pst[i : i+1]
+		//정렬 - 오름차순
+		sort.Ints(sliced)
+		answer = append(answer, sliced[command[2]-1])
 	}
 
 	return answer
