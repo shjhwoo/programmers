@@ -1,110 +1,68 @@
 package main_test
 
 import (
-	"slices"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestCase struct {
-	stringSlice []string
-	num         int
-	expect      []string
+	a      int
+	b      int
+	n      int
+	expect int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			stringSlice: []string{"sun", "bed", "car"},
-			num:         1,
-			expect:      []string{"car", "bed", "sun"},
+			a:      2,
+			b:      1,
+			n:      20,
+			expect: 19,
 		},
 		{
-			stringSlice: []string{"abce", "abcd", "cdx"},
-			num:         2,
-			expect:      []string{"abcd", "abce", "cdx"},
+			a:      3,
+			b:      1,
+			n:      20,
+			expect: 9,
+		},
+		{
+			a:      7,
+			b:      2,
+			n:      20,
+			expect: 6, //(20-14+4) = 10 => (10-7+2) = 5  , 4 + 2
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.stringSlice, test.num)
+		ans := solution(test.a, test.b, test.n)
 		t.Log(ans, "계산값")
-		assert.True(t, slices.Equal(test.expect, ans))
+		assert.Equal(t, test.expect, ans)
 	}
 }
 
-var dict = map[string]int{
-	"a": 0,
-	"b": 1,
-	"c": 2,
-	"d": 3,
-	"e": 4,
-	"f": 5,
-	"g": 6,
-	"h": 7,
-	"i": 8,
-	"j": 9,
-	"k": 10,
-	"l": 11,
-	"m": 12,
-	"n": 13,
-	"o": 14,
-	"p": 15,
-	"q": 16,
-	"r": 17,
-	"s": 18,
-	"t": 19,
-	"u": 20,
-	"v": 21,
-	"w": 22,
-	"x": 23,
-	"y": 24,
-	"z": 25,
-}
+func solution(a int, b int, n int) int {
+	//얼마만큼을 반복해야 하는지가 문제이다.
 
-func solution(strings []string, n int) []string {
+	//a개만큼의 빈병을 주면 콜라 b병을 받는다.
+	//처음에 가지고 있는 빈병은 n개이다.
 
-	dictionary := strings
-	sort.Strings(dictionary)
+	// n개의 병을 a로 나눈다. => 몫 : 받을 수 있는 콜라의 수,
+	// 이후 가지게 되는 콜라의 수 => 나머지 + 몫 .... 이 값을 x라고 하자.
 
-	dictMap := make(map[string]int)
-	for idx, word := range dictionary {
-		dictMap[word] = idx
+	// 그러면 x가 a보다 작으면 이때 정답을 반환하면 된다
+
+	//반복은 x가 a보다 크거나, 같은 동안만 할 수 있다.
+
+	var answer = (n / a) * b
+
+	var numberOfColaBottles = (n % a) + (n/a)*b
+
+	for numberOfColaBottles >= a {
+		answer += (numberOfColaBottles / a) * b
+		numberOfColaBottles = (numberOfColaBottles % a) + (numberOfColaBottles/a)*b
 	}
 
-	sort.Slice(strings, func(i, j int) bool {
-		leftword := strings[i]
-		rightword := strings[j]
-
-		leftChrIdx := dict[leftword[n:n+1]]
-		rightChrIdx := dict[rightword[n:n+1]]
-
-		if leftChrIdx != rightChrIdx {
-			return leftChrIdx < rightChrIdx
-		}
-
-		//사전순으로 앞선 단어 먼저.
-		leftDictIdx := dictMap[leftword]
-		rightDictIdx := dictMap[rightword]
-		return leftDictIdx < rightDictIdx
-	})
-
-	return strings
+	return answer
 }
-
-// 문자끼리 대소비교 가능..
-// func solution(strings []string, n int) []string {
-
-// 	sort.Slice(strings, func(i, j int) bool {
-// 		strA := []byte(strings[i])
-// 		strB := []byte(strings[j])
-// 		if strA[n] == strB[n] {
-// 			return strings[i] < strings[j]
-// 		}
-// 		return strA[n] < strB[n]
-// 	})
-
-// 	return strings
-// }
