@@ -1,10 +1,10 @@
 package main_test
 
 import (
+	"sort"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/tools/go/pointer"
+	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
@@ -30,13 +30,13 @@ func TestSolution(t *testing.T) {
 	for _, test := range tests {
 		ans := solution(test.k, test.score)
 		t.Log(ans, "계산값")
-		assert.Equal(t, test.expect, ans)
+		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
 func solution(k int, score []int) []int {
 	var answer []int
-	var podium = initPodium(score[:k])
+	var podium = score[:k]
 
 	//처음 k개까지는, 가장 낮은 거 동일하ㅔ 채워넣는다.
 	lowestScoreOfKdays := getLowestScore(score[:k])
@@ -46,8 +46,11 @@ func solution(k int, score []int) []int {
 
 	//그 다음부터는 1명씩 갈아치워야 한다.
 	for i := k; i < len(score); i++ {
-		answer = append(answer,  getLowestScore(podium))
-		podium = updatePodium(podium, score[i])
+		podium = append(podium, score[i])
+		sort.IntSlice(podium).Sort()
+		podium = podium[1:]
+		answer = append(answer, getLowestScore(podium))
+
 	}
 
 	return answer
@@ -61,56 +64,4 @@ func getLowestScore(scores []int) int {
 		}
 	}
 	return lowest
-}
-
-func initPodium(scoresOfKdays []int) []int {
-
-	var podium = []int{}
-	podium[0] = scoresOfKdays[0]
-
-
-	leftIdx := 0
-	rightIdx := len(scoresOfKdays) - 1
-
-	for i := 1; i < len(scoresOfKdays); i++ {
-		firstVal := scoresOfKdays[0]
-		lastVal := podium[i-1]
-
-		//가운데 끼는 값인경우
-		if firstVal < scoresOfKdays[i] && scoresOfKdays[i] < lastVal {
-
-		}
-
-		//firstVal보다도 작은경우
-		if scoresOfKdays[i] =< firstVal {
-			podium = append([]int{scoresOfKdays[i]}, podium...)
-			continue
-		}
-
-		//lastVal보다도 큰경우
-		if scoresOfKdays[i] >= lastVal {
-			podium = append(podium, scoresOfKdays[i])
-			continue
-		}
-	}
-
-	return podium
-}
-
-
-func updatePodium(podium []int, score int) []int {
-	lowestScore := podium[0]
-	highestScore := podium[len(podium)-1]
-
-	if score > highestScore {
-		podium = append(podium, score)
-		return podium[1:]
-	}
-
-	if score < lowestScore {
-		return podium
-	}
-
-	//가운데에 끼는 경우..
-	
 }
