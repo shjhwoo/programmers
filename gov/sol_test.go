@@ -8,60 +8,132 @@ import (
 )
 
 type TestCase struct {
-	k      int
-	score  []int
+	k      []int
 	expect []int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			k:      3,
-			score:  []int{10, 100, 20, 150, 1, 100, 200},
-			expect: []int{10, 10, 10, 20, 20, 100, 100},
+			k:      []int{1, 2, 3, 4, 5},
+			expect: []int{1},
 		},
 		{
-			k:      4,
-			score:  []int{0, 300, 40, 300, 20, 70, 150, 50, 500, 1000},
-			expect: []int{0, 0, 0, 0, 20, 40, 70, 70, 150, 300},
+			k:      []int{1, 3, 2, 4, 2},
+			expect: []int{1, 2, 3},
+		},
+		{
+			k:      []int{1, 1, 3, 4, 5, 2},
+			expect: []int{1},
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.k, test.score)
+		ans := solution(test.k)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(k int, score []int) []int {
+func solution(answers []int) []int {
+	var scoreMap = map[int]int{
+		1: 0,
+		2: 0,
+		3: 0,
+	}
+
+	for i := 1; i <= 3; i++ {
+		for index, answer := range answers {
+			supojaAns := getAnswerOfSupoja(index, i)
+			if answer == supojaAns {
+				scoreMap[i]++
+			}
+		}
+	}
+
+	var maxScore int
+	for _, score := range scoreMap {
+		if score >= maxScore {
+			maxScore = score
+		}
+	}
+
 	var answer []int
-	var podium = score[:k]
-
-	//처음 k개까지는, 가장 낮은 거 동일하ㅔ 채워넣는다.
-	lowestScoreOfKdays := getLowestScore(score[:k])
-	for len(answer) < k {
-		answer = append(answer, lowestScoreOfKdays)
+	for pno, score := range scoreMap {
+		if score == maxScore {
+			answer = append(answer, pno)
+		}
 	}
 
-	//그 다음부터는 1명씩 갈아치워야 한다.
-	for i := k; i < len(score); i++ {
-		podium = append(podium, score[i])
-		sort.IntSlice(podium).Sort()
-		podium = podium[1:]
-		answer = append(answer, getLowestScore(podium))
-
-	}
+	sort.Slice(answer, func(i, j int) bool {
+		return answer[i] < answer[j]
+	})
 
 	return answer
 }
 
-func getLowestScore(scores []int) int {
-	lowest := scores[0]
-	for _, v := range scores {
-		if v < lowest {
-			lowest = v
+func getAnswerOfSupoja(index int, supojaNum int) int {
+	switch supojaNum {
+	case 1:
+		//인덱스에 1을 더하고, 5로 나눈 나머지 구하기. 0이면 5를 준다
+		rem := (index + 1) % 5
+		if rem == 0 {
+			return 5
+		} else {
+			return rem
+		}
+	case 2:
+		if index%2 == 0 {
+			return 2
+		} else {
+			var tag int
+			if index < 8 {
+				tag = index
+			} else {
+				tag = index % 8
+			}
+
+			switch tag {
+			case 1:
+				return 1
+			case 3:
+				return 3
+			case 5:
+				return 4
+			case 7:
+				return 5
+			}
+		}
+	case 3:
+		//인덱스가 10보다 작다면
+		//홀수인덱스는 자기 바로 앞의 인덱스 숫자와 같아.
+		var tag int
+		if index < 10 {
+			if index%2 == 1 {
+				tag = index - 1
+			} else {
+				tag = index
+			}
+
+		} else {
+			tag = index % 10
+			if tag%2 == 1 {
+				tag = tag - 1
+			}
+		}
+		switch tag {
+		case 0:
+			return 3
+		case 2:
+			return 1
+		case 4:
+			return 2
+		case 6:
+			return 4
+		case 8:
+			return 5
 		}
 	}
-	return lowest
+
+	return 0
 }
