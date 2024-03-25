@@ -1,30 +1,26 @@
 package main_test
 
 import (
-	"sort"
+	"strings"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
-	k      []int
-	expect []int
+	k      []string
+	expect int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			k:      []int{1, 2, 3, 4, 5},
-			expect: []int{1},
+			k:      []string{"aya", "yee", "u", "maa"},
+			expect: 1,
 		},
 		{
-			k:      []int{1, 3, 2, 4, 2},
-			expect: []int{1, 2, 3},
-		},
-		{
-			k:      []int{1, 1, 3, 4, 5, 2},
-			expect: []int{1},
+			k:      []string{"ayaye", "uuu", "yeye", "yemawoo", "ayaayaa"},
+			expect: 2,
 		},
 	}
 
@@ -35,105 +31,102 @@ func TestSolution(t *testing.T) {
 	}
 }
 
-func solution(answers []int) []int {
-	var scoreMap = map[int]int{
-		1: 0,
-		2: 0,
-		3: 0,
-	}
+func solution(babbling []string) int {
 
-	for i := 1; i <= 3; i++ {
-		for index, answer := range answers {
-			supojaAns := getAnswerOfSupoja(index, i)
-			if answer == supojaAns {
-				scoreMap[i]++
-			}
+	var answer int
+
+	for _, word := range babbling {
+		if isAbleToSpeak(word) {
+			answer++
 		}
 	}
-
-	var maxScore int
-	for _, score := range scoreMap {
-		if score >= maxScore {
-			maxScore = score
-		}
-	}
-
-	var answer []int
-	for pno, score := range scoreMap {
-		if score == maxScore {
-			answer = append(answer, pno)
-		}
-	}
-
-	sort.Slice(answer, func(i, j int) bool {
-		return answer[i] < answer[j]
-	})
 
 	return answer
 }
 
-func getAnswerOfSupoja(index int, supojaNum int) int {
-	switch supojaNum {
-	case 1:
-		//인덱스에 1을 더하고, 5로 나눈 나머지 구하기. 0이면 5를 준다
-		rem := (index + 1) % 5
-		if rem == 0 {
-			return 5
-		} else {
-			return rem
-		}
-	case 2:
-		if index%2 == 0 {
-			return 2
-		} else {
-			var tag int
-			if index < 8 {
-				tag = index
-			} else {
-				tag = index % 8
-			}
+func isAbleToSpeak(word string) bool {
+	//단어를 어떻게 쪼갤 수 있을까?
 
-			switch tag {
-			case 1:
-				return 1
-			case 3:
-				return 3
-			case 5:
-				return 4
-			case 7:
-				return 5
-			}
-		}
-	case 3:
-		//인덱스가 10보다 작다면
-		//홀수인덱스는 자기 바로 앞의 인덱스 숫자와 같아.
-		var tag int
-		if index < 10 {
-			if index%2 == 1 {
-				tag = index - 1
-			} else {
-				tag = index
-			}
+	/*
+		경우의 수를 나누어 생각한다
 
-		} else {
-			tag = index % 10
-			if tag%2 == 1 {
-				tag = tag - 1
-			}
-		}
-		switch tag {
-		case 0:
-			return 3
-		case 2:
-			return 1
-		case 4:
-			return 2
-		case 6:
-			return 4
-		case 8:
-			return 5
+		1) 단어이 길이가 1인 경우: 불가능
+
+		2) 단어의 길이가 2인 경우: ye, ma만 가능
+
+		3) 단어의 길이가 3인 경우: aya, woo 만 가능함
+
+		4) 단어의 길이가 4인 경우: maye, yema 4가지만 가능하다!
+
+
+		주어진 단어를 1글자 단위로 쪼개본다. 그러면, a, y, w, m 중 분명 한 글자는 나온다.
+		a로 시작하면 a포함 3글자까지 분석해서 aya와 같은지 판단. 다르면 바로 탈락
+		y로 시작하면 y포함 2글자까지 분석해서 ye와 같은지 판단. 다르면 바로 탈락
+		w로 시작하면 w포함 3글자까지 분석해서 woo와 같은지 판단. 다르면 바로 탈락
+		m으로 시작하면 m포함 2글자까지 분석해서 ma와 같은지 판단. 다르면 바로 탈락
+
+		그러면, 같은 경우에는 바로 다음 글자로 건너뛰어 분석하는데, 또 같은 글자로 시작한다면 바로 탈락시킨다!!
+	*/
+
+	if len(word) == 1 {
+		return false
+	}
+
+	if len(word) == 2 {
+		if word == "ye" || word == "ma" {
+			return true
 		}
 	}
 
-	return 0
+	if len(word) == 3 {
+		if word == "aya" || word == "woo" {
+			return true
+		}
+	}
+
+	var subWords []string
+	var lastWord string
+	splittedWord := strings.Split(word, "")
+
+	var idx int
+
+	for idx < len(splittedWord) {
+
+		var char = splittedWord[idx]
+
+		if char == "a" || char == "w" {
+			var nextIdx = idx + 3
+			if nextIdx >= len(splittedWord) {
+				nextIdx = len(splittedWord)
+			}
+			if word[idx:nextIdx] == "aya" || word[idx:nextIdx] == "woo" {
+				if lastWord != "" && lastWord == word[idx:nextIdx] {
+					return false
+				}
+				subWords = append(subWords, word[idx:nextIdx])
+				lastWord = subWords[len(subWords)-1]
+				idx += 3
+				continue
+			}
+		}
+
+		if char == "y" || char == "m" {
+			var nextIdx = idx + 2
+			if nextIdx >= len(splittedWord) {
+				nextIdx = len(splittedWord)
+			}
+			if word[idx:nextIdx] == "ye" || word[idx:nextIdx] == "ma" {
+				if lastWord != "" && lastWord == word[idx:nextIdx] {
+					return false
+				}
+				subWords = append(subWords, word[idx:nextIdx])
+				lastWord = subWords[len(subWords)-1]
+				idx += 2
+				continue
+			}
+		}
+		return false
+	}
+
+	return true
 }
