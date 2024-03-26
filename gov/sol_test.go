@@ -1,132 +1,95 @@
 package main_test
 
 import (
-	"strings"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
-	k      []string
-	expect int
+	lottos   [6]int
+	win_nums [6]int
+	expect   []int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			k:      []string{"aya", "yee", "u", "maa"},
-			expect: 1,
+			lottos:   [6]int{44, 1, 0, 0, 31, 25},
+			win_nums: [6]int{31, 10, 45, 1, 6, 19},
+			expect:   []int{3, 5},
 		},
 		{
-			k:      []string{"ayaye", "uuu", "yeye", "yemawoo", "ayaayaa"},
-			expect: 2,
+			lottos:   [6]int{0, 0, 0, 0, 0, 0},
+			win_nums: [6]int{38, 19, 20, 40, 15, 25},
+			expect:   []int{1, 6},
+		},
+		{
+			lottos:   [6]int{45, 4, 35, 20, 3, 9},
+			win_nums: [6]int{20, 9, 3, 45, 4, 35},
+			expect:   []int{1, 1},
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.k)
+		ans := solution(test.lottos, test.win_nums)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(babbling []string) int {
+func solution(lottos [6]int, win_nums [6]int) []int {
+	win_numMap := make(map[int]bool)
+	for _, num := range win_nums {
+		win_numMap[num] = true
+	}
 
-	var answer int
+	var answer []int
 
-	for _, word := range babbling {
-		if isAbleToSpeak(word) {
-			answer++
+	var baseHitCount int
+	var matchedNumberMap = make(map[int]bool)
+	var numverOfZero int
+	for _, num := range lottos {
+		if _, exist := win_numMap[num]; exist {
+			baseHitCount++
+			matchedNumberMap[num] = true
+		}
+
+		if num == 0 {
+			numverOfZero++
 		}
 	}
+
+	var unmatchedNumberMap = make(map[int]bool)
+	for _, wnum := range win_nums {
+		if _, exist := matchedNumberMap[wnum]; !exist {
+			unmatchedNumberMap[wnum] = true
+		}
+	}
+
+	//최저 순위: 로또구매자가 선택한 번호 중 0을 제외하고 당첨번호와 일치하는 개수를 센다.
+	var lowestRank int
+	if baseHitCount < 2 {
+		lowestRank = 6
+	} else {
+		lowestRank = 7 - baseHitCount
+	}
+
+	var highestRank int
+	//최고 순위) 0으로 되어있는 부분.
+	if numverOfZero == 0 || len(unmatchedNumberMap) == 0 {
+		highestRank = lowestRank
+	} else {
+		hitCount := (baseHitCount + numverOfZero)
+		if hitCount < 2 {
+			highestRank = 6
+		} else {
+			highestRank = 7 - hitCount
+		}
+	}
+
+	answer = append(answer, highestRank)
+	answer = append(answer, lowestRank)
 
 	return answer
-}
-
-func isAbleToSpeak(word string) bool {
-	//단어를 어떻게 쪼갤 수 있을까?
-
-	/*
-		경우의 수를 나누어 생각한다
-
-		1) 단어이 길이가 1인 경우: 불가능
-
-		2) 단어의 길이가 2인 경우: ye, ma만 가능
-
-		3) 단어의 길이가 3인 경우: aya, woo 만 가능함
-
-		4) 단어의 길이가 4인 경우: maye, yema 4가지만 가능하다!
-
-
-		주어진 단어를 1글자 단위로 쪼개본다. 그러면, a, y, w, m 중 분명 한 글자는 나온다.
-		a로 시작하면 a포함 3글자까지 분석해서 aya와 같은지 판단. 다르면 바로 탈락
-		y로 시작하면 y포함 2글자까지 분석해서 ye와 같은지 판단. 다르면 바로 탈락
-		w로 시작하면 w포함 3글자까지 분석해서 woo와 같은지 판단. 다르면 바로 탈락
-		m으로 시작하면 m포함 2글자까지 분석해서 ma와 같은지 판단. 다르면 바로 탈락
-
-		그러면, 같은 경우에는 바로 다음 글자로 건너뛰어 분석하는데, 또 같은 글자로 시작한다면 바로 탈락시킨다!!
-	*/
-
-	if len(word) == 1 {
-		return false
-	}
-
-	if len(word) == 2 {
-		if word == "ye" || word == "ma" {
-			return true
-		}
-	}
-
-	if len(word) == 3 {
-		if word == "aya" || word == "woo" {
-			return true
-		}
-	}
-
-	var subWords []string
-	var lastWord string
-	splittedWord := strings.Split(word, "")
-
-	var idx int
-
-	for idx < len(splittedWord) {
-
-		var char = splittedWord[idx]
-
-		if char == "a" || char == "w" {
-			var nextIdx = idx + 3
-			if nextIdx >= len(splittedWord) {
-				nextIdx = len(splittedWord)
-			}
-			if word[idx:nextIdx] == "aya" || word[idx:nextIdx] == "woo" {
-				if lastWord != "" && lastWord == word[idx:nextIdx] {
-					return false
-				}
-				subWords = append(subWords, word[idx:nextIdx])
-				lastWord = subWords[len(subWords)-1]
-				idx += 3
-				continue
-			}
-		}
-
-		if char == "y" || char == "m" {
-			var nextIdx = idx + 2
-			if nextIdx >= len(splittedWord) {
-				nextIdx = len(splittedWord)
-			}
-			if word[idx:nextIdx] == "ye" || word[idx:nextIdx] == "ma" {
-				if lastWord != "" && lastWord == word[idx:nextIdx] {
-					return false
-				}
-				subWords = append(subWords, word[idx:nextIdx])
-				lastWord = subWords[len(subWords)-1]
-				idx += 2
-				continue
-			}
-		}
-		return false
-	}
-
-	return true
 }
