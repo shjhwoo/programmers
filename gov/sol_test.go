@@ -1,89 +1,61 @@
 package main_test
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
-	s      string
-	expect int
+	ingredient []int
+	expect     int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
-		// {
-		// 	s:      "banana",
-		// 	expect: 3,
-		// },
-		// {
-		// 	s:      "abracadabra",
-		// 	expect: 6,
-		// },
-		// {
-		// 	s:      "aaabbaccccabba",
-		// 	expect: 3,
-		// },
 		{
-			s:      "zzzzzz",
-			expect: 1,
+			ingredient: []int{2, 1, 1, 2, 3, 1, 2, 3, 1},
+			expect:     2,
+		},
+		{
+			ingredient: []int{1, 3, 2, 1, 2, 1, 3, 1, 2},
+			expect:     0,
+		},
+		{
+			ingredient: []int{1, 2, 3, 1, 1, 2, 3, 1, 1, 2, 3, 1},
+			expect:     3,
+		},
+		{
+			ingredient: []int{1, 1, 1, 2, 1, 2, 3, 1, 2, 3, 1},
+			expect:     1,
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.s)
+		ans := solution(test.ingredient)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(s string) int {
-
-	var answer int
-
-	var xCount int
-	var otherCount int
-
-	var x rune
-
-	runes := []rune(s)
-	for index, char := range runes {
-		if xCount == 0 && otherCount == 0 {
-			x = char
-			xCount++
-
-			if index == len(runes)-1 {
-				answer++
-			}
-			continue
-		}
-
-		if x != char {
-			otherCount++
-
-			if otherCount == xCount {
-				answer++
-				xCount = 0
-				otherCount = 0
-			}
-
-			if otherCount != xCount && index == len(runes)-1 {
-				answer++
-				break
-			}
-		}
-
-		if x == char {
-			xCount++
-
-			if index == len(runes)-1 {
-				answer++
-				continue
-			}
-		}
-
+func solution(ingredient []int) int {
+	var ingredientString string
+	for _, v := range ingredient {
+		ingredientString += strconv.Itoa(v)
 	}
+
+	return wrapHamburger(ingredientString)
+}
+
+func wrapHamburger(ingredientString string) int {
+	leftingredientSlice := strings.Split(ingredientString, "1231")
+	if len(leftingredientSlice) == 1 {
+		return 0
+	}
+
+	var answer = (len(leftingredientSlice) - 1) + wrapHamburger(strings.Join(leftingredientSlice, ""))
 
 	return answer
 }
