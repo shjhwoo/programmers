@@ -46,39 +46,41 @@ func TestSolution(t *testing.T) {
 func solution(ingredient []int) int {
 	var answer int
 
-	var index = 3
+	var idx int
 
-	for index < len(ingredient) {
-		if ingredient[index] == 2 {
-			index = index + 2
-			continue
+	for idx < len(ingredient)-3 {
+		if isAbleToWrap(ingredient[idx : idx+4]) {
+			answer++
+			ingredient = append(ingredient[:idx], ingredient[idx+4:]...)
+			idx = 0 //처음부터 다시 본다.
+		} else {
+			idx++
 		}
-
-		if ingredient[index] == 3 {
-			index++
-			continue
-		}
-
-		if ingredient[index] == 1 {
-			if index >= 1 && ingredient[index-1] < 3 {
-				index = index + 3
-				continue
-			}
-
-			if index >= 3 && isAbleToWrap(ingredient[index-3:index]) {
-				answer++
-				ingredient = append(ingredient[:index-3], ingredient[index+1:]...)
-				index = index - 3
-			} else {
-				index++
-			}
-		}
-
 	}
 
 	return answer
 }
 
 func isAbleToWrap(sl []int) bool {
-	return sl[0] == 1 && sl[1] == 2 && sl[2] == 3
+	return sl[0] == 1 && sl[1] == 2 && sl[2] == 3 && sl[3] == 1
 }
+
+// ////왜 더 빠를까? 조건식이 단순해서? --스택 이용 (쌓아 올린다.)
+// func isBugger(ingredient []int) bool {
+// 	return ingredient[0] == 1 && ingredient[1] == 2 && ingredient[2] == 3 && ingredient[3] == 1
+// }
+
+// func solution(ingredient []int) int {
+// 	stack := make([]int, 0, len(ingredient))
+// 	answer := 0
+
+// 	for index := range ingredient {
+// 		stack = append(stack, ingredient[index]) //무조건 끝에서부터 보기 때문에 위 솔루션보다 훨씬 빠름
+// 		if len(stack) >= 4 && isBugger(stack[len(stack)-4:]) {
+// 			answer++
+// 			stack = stack[:len(stack)-4]
+// 		}
+// 	}
+
+// 	return answer
+// }
