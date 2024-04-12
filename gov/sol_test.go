@@ -1,86 +1,106 @@
 package main_test
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
 	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
-	ingredient []int
-	expect     int
+	today     string
+	terms     []string
+	privacies []string
+	expect    []int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			ingredient: []int{2, 1, 1, 2, 3, 1, 2, 3, 1},
-			expect:     2,
+			today:     "2022.05.19",
+			terms:     []string{"A 6", "B 12", "C 3"},
+			privacies: []string{"2021.05.02 A", "2021.07.01 B", "2022.02.19 C", "2022.02.20 C"},
+			expect:    []int{1, 3},
 		},
 		{
-			ingredient: []int{1, 3, 2, 1, 2, 1, 3, 1, 2},
-			expect:     0,
+			today:     "2020.01.01",
+			terms:     []string{"Z 3", "D 5"},
+			privacies: []string{"2019.01.01 D", "2019.11.15 Z", "2019.08.02 D", "2019.07.01 D", "2018.12.28 Z"},
+			expect:    []int{1, 4, 5},
 		},
-		{
-			ingredient: []int{1, 2, 3, 1, 1, 2, 3, 1, 1, 2, 3, 1},
-			expect:     3,
-		},
-		{
-			ingredient: []int{1, 2, 1, 2, 1, 2, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1},
-			expect:     4,
-		},
-		{
-			ingredient: []int{1, 2, 1, 2, 3, 1, 3, 1, 2, 3, 1, 1},
-			expect:     2,
-		},
-		//들어온 순서대로 1231이 완성되면 햄버거가 완성되어야하는데 전체에서 따지면 순서대로가아닌 초기상태에서 만든후 빠집니다.
 	}
 
 	for _, test := range tests {
-		ans := solution(test.ingredient)
+		ans := solution(test.today, test.terms, test.privacies)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(ingredient []int) int {
-	var answer int
+func solution(today string, terms []string, privacies []string) []int {
 
-	var idx int
+	var termMap = getTermMap(terms)
 
-	for idx < len(ingredient)-3 {
-		if isAbleToWrap(ingredient[idx : idx+4]) {
-			answer++
-			ingredient = append(ingredient[:idx], ingredient[idx+4:]...)
-			idx = 0 //처음부터 다시 본다.
-		} else {
-			idx++
+	todayDate, err := time.Parse("20060102", strings.ReplaceAll(today, ".", ""))
+	if err != nil {
+		fmt.Println("날짜 형식이 잘못되었습니다.", err)
+		return nil
+	}
+
+	var answer []int
+
+	for idx, priv := range privacies {
+		if IsAbleToDiscard(priv, termMap, todayDate) {
+			answer = append(answer, idx+1)
 		}
 	}
 
 	return answer
 }
 
-func isAbleToWrap(sl []int) bool {
-	return sl[0] == 1 && sl[1] == 2 && sl[2] == 3 && sl[3] == 1
+func getTermMap(terms []string) map[string]int {
+	var result = make(map[string]int)
+
+	for _, term := range terms {
+		tsl := strings.Split(term, " ")
+
+		termName := tsl[0]
+
+		term, err := strconv.Atoi(tsl[1])
+		if err != nil {
+			continue
+		}
+
+		result[termName] = term
+	}
+
+	return result
 }
 
-// ////왜 더 빠를까? 조건식이 단순해서? --스택 이용 (쌓아 올린다.)
-// func isBugger(ingredient []int) bool {
-// 	return ingredient[0] == 1 && ingredient[1] == 2 && ingredient[2] == 3 && ingredient[3] == 1
-// }
+func IsAbleToDiscard(privacyInfo string, termMap map[string]int, todayDate time.Time) bool {
+	collectDate, termName := getPrivacyInfo(privacyInfo)
+	discardDate := getDiscardDate(collectDate, termMap[termName])
 
-// func solution(ingredient []int) int {
-// 	stack := make([]int, 0, len(ingredient))
-// 	answer := 0
+	return todayDate.After(discardDate) || todayDate.Equal(discardDate)
+}
 
-// 	for index := range ingredient {
-// 		stack = append(stack, ingredient[index]) //무조건 끝에서부터 보기 때문에 위 솔루션보다 훨씬 빠름
-// 		if len(stack) >= 4 && isBugger(stack[len(stack)-4:]) {
-// 			answer++
-// 			stack = stack[:len(stack)-4]
-// 		}
-// 	}
+func getPrivacyInfo(privacyInfo string) (time.Time, string) {
+	tsl := strings.Split(privacyInfo, " ")
 
-// 	return answer
-// }
+	collectedDateStr := strings.ReplaceAll(tsl[0], ".", "")
+	termName := tsl[1]
+
+	collectedDateTime, err := time.Parse("20060102", collectedDateStr)
+	if err != nil {
+		return time.Time{}, ""
+	}
+
+	return collectedDateTime, termName
+}
+
+func getDiscardDate(collectedDate time.Time, term int) time.Time {
+	return collectedDate.AddDate(0, term, 0)
+}
