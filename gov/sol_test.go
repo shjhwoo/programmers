@@ -2,105 +2,129 @@ package main_test
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
-	today     string
-	terms     []string
-	privacies []string
-	expect    []int
+	friends []string
+	gifts   []string
+	expect  int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			today:     "2022.05.19",
-			terms:     []string{"A 6", "B 12", "C 3"},
-			privacies: []string{"2021.05.02 A", "2021.07.01 B", "2022.02.19 C", "2022.02.20 C"},
-			expect:    []int{1, 3},
+			friends: []string{"muzi", "ryan", "frodo", "neo"},
+			gifts:   []string{"muzi frodo", "muzi frodo", "ryan muzi", "ryan muzi", "ryan muzi", "frodo muzi", "frodo ryan", "neo muzi"},
+			expect:  2,
 		},
-		{
-			today:     "2020.01.01",
-			terms:     []string{"Z 3", "D 5"},
-			privacies: []string{"2019.01.01 D", "2019.11.15 Z", "2019.08.02 D", "2019.07.01 D", "2018.12.28 Z"},
-			expect:    []int{1, 4, 5},
-		},
+		// {
+		// 	friends: []string{"joy", "brad", "alessandro", "conan", "david"},
+		// 	gifts:   []string{"alessandro brad", "alessandro joy", "alessandro conan", "david alessandro", "alessandro david"},
+		// 	expect:  4,
+		// },
+		// {
+		// 	friends: []string{"a", "b", "c"},
+		// 	gifts:   []string{"a b", "b a", "c a", "a c", "a c", "c a"},
+		// 	expect:  0,
+		// },
 	}
 
 	for _, test := range tests {
-		ans := solution(test.today, test.terms, test.privacies)
+		ans := solution(test.friends, test.gifts)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(today string, terms []string, privacies []string) []int {
+type GiftInfo struct {
+	GiveCnt   int //준 선물 수
+	GetCnt    int //받은 선물 수
+	GiftIndx  int //선물지수
+	GiftToGet int //받게 될 선물 수
+}
 
-	var termMap = getTermMap(terms)
+func solution(friends []string, gifts []string) int {
 
-	todayDate, err := time.Parse("20060102", strings.ReplaceAll(today, ".", ""))
-	if err != nil {
-		fmt.Println("날짜 형식이 잘못되었습니다.", err)
-		return nil
-	}
+	var tradeInfo = make(map[string]int)
+	for _, giver := range friends {
+		for _, taker := range friends {
 
-	var answer []int
+			if giver == taker {
+				continue
+			}
 
-	for idx, priv := range privacies {
-		if IsAbleToDiscard(priv, termMap, todayDate) {
-			answer = append(answer, idx+1)
+			pairName := fmt.Sprintf("%s %s", giver, taker)
+			if _, ok := tradeInfo[pairName]; ok {
+				tradeInfo[pairName]++
+			} else {
+				tradeInfo[pairName] = 0
+			}
 		}
 	}
 
-	return answer
-}
+	var giftTradeInfo = make(map[string]*GiftInfo)
+	for _, gift := range gifts {
+		prnsl := strings.Split(gift, " ")
+		giver := prnsl[0]
+		taker := prnsl[1]
 
-func getTermMap(terms []string) map[string]int {
-	var result = make(map[string]int)
-
-	for _, term := range terms {
-		tsl := strings.Split(term, " ")
-
-		termName := tsl[0]
-
-		term, err := strconv.Atoi(tsl[1])
-		if err != nil {
-			continue
+		if _, ok := giftTradeInfo[giver]; !ok {
+			giftTradeInfo[giver] = &GiftInfo{}
 		}
 
-		result[termName] = term
+		if _, ok := giftTradeInfo[taker]; !ok {
+			giftTradeInfo[taker] = &GiftInfo{}
+		}
+
+		//일단 위와 같이 초기화를 해주고 규칙에 따라서 주고받은 선물 내역 계산해준다
+		giftTradeInfo[giver].GiveCnt++
+		giftTradeInfo[taker].GetCnt++
+		giftTradeInfo[giver].GiftIndx = giftTradeInfo[giver].GiveCnt - giftTradeInfo[giver].GetCnt
+		giftTradeInfo[taker].GiftIndx = giftTradeInfo[taker].GiveCnt - giftTradeInfo[taker].GetCnt
 	}
 
-	return result
-}
+	for namePair, giveCnt := range tradeInfo {
+		prnsl := strings.Split(namePair, " ")
+		giver := prnsl[0]
+		taker := prnsl[1]
 
-func IsAbleToDiscard(privacyInfo string, termMap map[string]int, todayDate time.Time) bool {
-	collectDate, termName := getPrivacyInfo(privacyInfo)
-	discardDate := getDiscardDate(collectDate, termMap[termName])
+		op := fmt.Sprintf("%s %s", taker, giver)
 
-	return todayDate.After(discardDate) || todayDate.Equal(discardDate)
-}
+		takeCnt := tradeInfo[op]
 
-func getPrivacyInfo(privacyInfo string) (time.Time, string) {
-	tsl := strings.Split(privacyInfo, " ")
+		//더 많이 준 경우
+		if giveCnt > takeCnt {
+			giftTradeInfo[giver].GiftToGet++
+		}
 
-	collectedDateStr := strings.ReplaceAll(tsl[0], ".", "")
-	termName := tsl[1]
+		//같은 경우
+		if giveCnt == 0 || giveCnt == takeCnt {
+			if giftTradeInfo[giver].GiftIndx > giftTradeInfo[taker].GiftIndx {
+				giftTradeInfo[giver].GiftToGet++
+			} else if giftTradeInfo[giver].GiftIndx < giftTradeInfo[taker].GiftIndx {
+				giftTradeInfo[taker].GiftToGet++
+			}
+		}
 
-	collectedDateTime, err := time.Parse("20060102", collectedDateStr)
-	if err != nil {
-		return time.Time{}, ""
+		if takeCnt > giveCnt {
+			giftTradeInfo[taker].GiftToGet++
+		}
+
+		delete(tradeInfo, namePair)
+		delete(tradeInfo, op)
 	}
 
-	return collectedDateTime, termName
-}
+	var maxGiftN int
+	for _, giftInfo := range giftTradeInfo {
+		if giftInfo.GiftToGet > maxGiftN {
+			maxGiftN = giftInfo.GiftToGet
+		}
+	}
 
-func getDiscardDate(collectedDate time.Time, term int) time.Time {
-	return collectedDate.AddDate(0, term, 0)
+	//이때, 다음달에 가장 많은 선물을 받는 친구가 받을 선물의 수
+	return maxGiftN
 }
