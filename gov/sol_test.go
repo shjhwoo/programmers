@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -54,95 +53,34 @@ type GiftInfo struct {
 
 func solution(friends []string, gifts []string) int {
 
-	var realTradeInfo = make(map[string]int)
-	for _, trade := range gifts {
-		realTradeInfo[trade]++
+	var giftMap = make(map[string]bool)
+	for _, gift := range gifts {
+		giftMap[gift] = true
 	}
 
-	var alltradeInfo = make(map[string]int)
+	var tradeCountMap = make(map[string]int)
 	for _, giver := range friends {
 		for _, taker := range friends {
-
-			if giver == taker {
-				continue
-			}
-
 			pairName := fmt.Sprintf("%s %s", giver, taker)
-			if _, ok := realTradeInfo[pairName]; ok {
-				alltradeInfo[pairName]++
-			} else {
-				alltradeInfo[pairName] = 0
+
+			if _, ok := giftMap[pairName]; ok {
+				tradeCountMap[pairName]++
 			}
 		}
 	}
 
-	var giftTradeInfo = make(map[string]*GiftInfo)
+	var friendGiftInfo = make(map[string]GiftInfo)
+
 	for _, giver := range friends {
+		//친구 한명한명 따져본다.
+
+		var giveCnt int
+		var takeCnt int
+
 		for _, taker := range friends {
-			if giver == taker {
-				continue
-			}
-
-			if _, ok := giftTradeInfo[giver]; !ok {
-				giftTradeInfo[giver] = &GiftInfo{}
-			}
-
-			if _, ok := giftTradeInfo[taker]; !ok {
-				giftTradeInfo[taker] = &GiftInfo{}
-			}
-
 			pairName := fmt.Sprintf("%s %s", giver, taker)
-			if _, ok := realTradeInfo[pairName]; ok {
-				//일단 위와 같이 초기화를 해주고 규칙에 따라서 주고받은 선물 내역 계산해준다
-				giftTradeInfo[giver].GiveCnt++
-				giftTradeInfo[taker].GetCnt++
-			}
+			opPairName := fmt.Sprintf("%s %s", taker, giver)
+
 		}
 	}
-
-	//선물지수 계산
-	for _, trade := range giftTradeInfo {
-		trade.GiftIndx = trade.GiveCnt - trade.GetCnt
-	}
-
-	for namePair, giveCnt := range alltradeInfo {
-		prnsl := strings.Split(namePair, " ")
-		giver := prnsl[0]
-		taker := prnsl[1]
-
-		op := fmt.Sprintf("%s %s", taker, giver)
-
-		takeCnt := alltradeInfo[op]
-
-		//더 많이 준 경우
-		if giveCnt > takeCnt {
-			giftTradeInfo[giver].GiftToGet++
-		}
-
-		//같은 경우
-		if (giveCnt == 0 && giftTradeInfo[giver].GetCnt == 0) || giveCnt == takeCnt {
-			if giftTradeInfo[giver].GiftIndx > giftTradeInfo[taker].GiftIndx {
-				giftTradeInfo[giver].GiftToGet++
-			} else if giftTradeInfo[giver].GiftIndx < giftTradeInfo[taker].GiftIndx {
-				giftTradeInfo[taker].GiftToGet++
-			}
-		}
-
-		if takeCnt > giveCnt {
-			giftTradeInfo[taker].GiftToGet++
-		}
-
-		delete(alltradeInfo, namePair)
-		delete(alltradeInfo, op)
-	}
-
-	var maxGiftN int
-	for _, giftInfo := range giftTradeInfo {
-		if giftInfo.GiftToGet > maxGiftN {
-			maxGiftN = giftInfo.GiftToGet
-		}
-	}
-
-	//이때, 다음달에 가장 많은 선물을 받는 친구가 받을 선물의 수
-	return maxGiftN
 }
