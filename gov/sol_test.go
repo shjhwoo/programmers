@@ -21,16 +21,21 @@ func TestSolution(t *testing.T) {
 			gifts:   []string{"muzi frodo", "muzi frodo", "ryan muzi", "ryan muzi", "ryan muzi", "frodo muzi", "frodo ryan", "neo muzi"},
 			expect:  2,
 		},
-		// {
-		// 	friends: []string{"joy", "brad", "alessandro", "conan", "david"},
-		// 	gifts:   []string{"alessandro brad", "alessandro joy", "alessandro conan", "david alessandro", "alessandro david"},
-		// 	expect:  4,
-		// },
-		// {
-		// 	friends: []string{"a", "b", "c"},
-		// 	gifts:   []string{"a b", "b a", "c a", "a c", "a c", "c a"},
-		// 	expect:  0,
-		// },
+		{
+			friends: []string{"joy", "brad", "alessandro", "conan", "david"},
+			gifts:   []string{"alessandro brad", "alessandro joy", "alessandro conan", "david alessandro", "alessandro david"},
+			expect:  4,
+		},
+		{
+			friends: []string{"a", "b", "c"},
+			gifts:   []string{"a b", "b a", "c a", "a c", "a c", "c a"},
+			expect:  0,
+		},
+		{
+			friends: []string{"a", "b", "c"},
+			gifts:   []string{"a b"},
+			expect:  2,
+		},
 	}
 
 	for _, test := range tests {
@@ -49,7 +54,12 @@ type GiftInfo struct {
 
 func solution(friends []string, gifts []string) int {
 
-	var tradeInfo = make(map[string]int)
+	var realTradeInfo = make(map[string]int)
+	for _, trade := range gifts {
+		realTradeInfo[trade]++
+	}
+
+	var alltradeInfo = make(map[string]int)
 	for _, giver := range friends {
 		for _, taker := range friends {
 
@@ -58,43 +68,51 @@ func solution(friends []string, gifts []string) int {
 			}
 
 			pairName := fmt.Sprintf("%s %s", giver, taker)
-			if _, ok := tradeInfo[pairName]; ok {
-				tradeInfo[pairName]++
+			if _, ok := realTradeInfo[pairName]; ok {
+				alltradeInfo[pairName]++
 			} else {
-				tradeInfo[pairName] = 0
+				alltradeInfo[pairName] = 0
 			}
 		}
 	}
 
 	var giftTradeInfo = make(map[string]*GiftInfo)
-	for _, gift := range gifts {
-		prnsl := strings.Split(gift, " ")
-		giver := prnsl[0]
-		taker := prnsl[1]
+	for _, giver := range friends {
+		for _, taker := range friends {
+			if giver == taker {
+				continue
+			}
 
-		if _, ok := giftTradeInfo[giver]; !ok {
-			giftTradeInfo[giver] = &GiftInfo{}
+			if _, ok := giftTradeInfo[giver]; !ok {
+				giftTradeInfo[giver] = &GiftInfo{}
+			}
+
+			if _, ok := giftTradeInfo[taker]; !ok {
+				giftTradeInfo[taker] = &GiftInfo{}
+			}
+
+			pairName := fmt.Sprintf("%s %s", giver, taker)
+			if _, ok := realTradeInfo[pairName]; ok {
+				//일단 위와 같이 초기화를 해주고 규칙에 따라서 주고받은 선물 내역 계산해준다
+				giftTradeInfo[giver].GiveCnt++
+				giftTradeInfo[taker].GetCnt++
+			}
 		}
-
-		if _, ok := giftTradeInfo[taker]; !ok {
-			giftTradeInfo[taker] = &GiftInfo{}
-		}
-
-		//일단 위와 같이 초기화를 해주고 규칙에 따라서 주고받은 선물 내역 계산해준다
-		giftTradeInfo[giver].GiveCnt++
-		giftTradeInfo[taker].GetCnt++
-		giftTradeInfo[giver].GiftIndx = giftTradeInfo[giver].GiveCnt - giftTradeInfo[giver].GetCnt
-		giftTradeInfo[taker].GiftIndx = giftTradeInfo[taker].GiveCnt - giftTradeInfo[taker].GetCnt
 	}
 
-	for namePair, giveCnt := range tradeInfo {
+	//선물지수 계산
+	for _, trade := range giftTradeInfo {
+		trade.GiftIndx = trade.GiveCnt - trade.GetCnt
+	}
+
+	for namePair, giveCnt := range alltradeInfo {
 		prnsl := strings.Split(namePair, " ")
 		giver := prnsl[0]
 		taker := prnsl[1]
 
 		op := fmt.Sprintf("%s %s", taker, giver)
 
-		takeCnt := tradeInfo[op]
+		takeCnt := alltradeInfo[op]
 
 		//더 많이 준 경우
 		if giveCnt > takeCnt {
@@ -102,7 +120,7 @@ func solution(friends []string, gifts []string) int {
 		}
 
 		//같은 경우
-		if giveCnt == 0 || giveCnt == takeCnt {
+		if (giveCnt == 0 && giftTradeInfo[giver].GetCnt == 0) || giveCnt == takeCnt {
 			if giftTradeInfo[giver].GiftIndx > giftTradeInfo[taker].GiftIndx {
 				giftTradeInfo[giver].GiftToGet++
 			} else if giftTradeInfo[giver].GiftIndx < giftTradeInfo[taker].GiftIndx {
@@ -114,8 +132,8 @@ func solution(friends []string, gifts []string) int {
 			giftTradeInfo[taker].GiftToGet++
 		}
 
-		delete(tradeInfo, namePair)
-		delete(tradeInfo, op)
+		delete(alltradeInfo, namePair)
+		delete(alltradeInfo, op)
 	}
 
 	var maxGiftN int
