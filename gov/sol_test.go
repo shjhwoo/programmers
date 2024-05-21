@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -21,21 +22,21 @@ func TestSolution(t *testing.T) {
 			gifts:   []string{"muzi frodo", "muzi frodo", "ryan muzi", "ryan muzi", "ryan muzi", "frodo muzi", "frodo ryan", "neo muzi"},
 			expect:  2,
 		},
-		// {
-		// 	friends: []string{"joy", "brad", "alessandro", "conan", "david"},
-		// 	gifts:   []string{"alessandro brad", "alessandro joy", "alessandro conan", "david alessandro", "alessandro david"},
-		// 	expect:  4,
-		// },
-		// {
-		// 	friends: []string{"a", "b", "c"},
-		// 	gifts:   []string{"a b", "b a", "c a", "a c", "a c", "c a"},
-		// 	expect:  0,
-		// },
-		// {
-		// 	friends: []string{"a", "b", "c"},
-		// 	gifts:   []string{"a b"},
-		// 	expect:  2,
-		// },
+		{
+			friends: []string{"joy", "brad", "alessandro", "conan", "david"},
+			gifts:   []string{"alessandro brad", "alessandro joy", "alessandro conan", "david alessandro", "alessandro david"},
+			expect:  4,
+		},
+		{
+			friends: []string{"a", "b", "c"},
+			gifts:   []string{"a b", "b a", "c a", "a c", "a c", "c a"},
+			expect:  0,
+		},
+		{
+			friends: []string{"a", "b", "c"},
+			gifts:   []string{"a b"},
+			expect:  2,
+		},
 	}
 
 	for _, test := range tests {
@@ -45,92 +46,110 @@ func TestSolution(t *testing.T) {
 	}
 }
 
-type GiftInfo struct {
-	GiveMap   map[string]int
-	TotalGive int
-	TotalTake int
-	GiftIndex int
-	WillGet   int
+type GiftTradeInfo struct {
+	TotalGiveCnt int
+	TotalTakeCnt int
+	GiftIndex    int
+	NewGift      int
+	GiftTrade    map[string]*GiftCnt
+}
+
+type GiftCnt struct {
+	GiveCnt int
+	TakeCnt int
 }
 
 func solution(friends []string, gifts []string) int {
-	//일단 친구들을 가지고 모든 짝 조합을 만들어내고 값으로는 주고받은 선물 수를 저장한다.
-	var GiftPairs = make(map[string]int)
-	for _, giftTradePair := range gifts {
-		GiftPairs[giftTradePair]++
-	}
+	//선물 주고받은 기록 생성하기
 
-	var giftInfoMap = make(map[string]*GiftInfo)
+	var giftTradeHistory = make(map[string]*GiftTradeInfo)
 	for _, friend := range friends {
-		giftInfoMap[friend] = &GiftInfo{
-			GiveMap: make(map[string]int),
+		giftTradeHistory[friend] = &GiftTradeInfo{
+			TotalGiveCnt: 0,
+			TotalTakeCnt: 0,
+			GiftTrade:    make(map[string]*GiftCnt),
 		}
 	}
 
-	var AllFriendsFairs = make(map[string]int)
+	//선물 거래가 없었던 친구들 목록을 만들어야 한다.
+	var tradedPairs = make(map[string]bool)
+	for _, gift := range gifts {
+		tradedPairs[gift] = true
+
+		giver := strings.Split(gift, " ")[0]
+		taker := strings.Split(gift, " ")[1]
+
+		giftTradeHistory[giver].TotalGiveCnt++
+		giftTradeHistory[taker].TotalTakeCnt++
+
+		if giftTradeHistory[giver].GiftTrade[taker] == nil {
+			giftTradeHistory[giver].GiftTrade[taker] = &GiftCnt{}
+		}
+		giftTradeHistory[giver].GiftTrade[taker].GiveCnt++
+
+		if giftTradeHistory[taker].GiftTrade[giver] == nil {
+			giftTradeHistory[taker].GiftTrade[giver] = &GiftCnt{}
+		}
+		giftTradeHistory[taker].GiftTrade[giver].TakeCnt++
+
+	}
+	//이걸 기준으로 판단한다
+	//일단 쌍을 무조건 다 만들어서 거래 안한 리스트에 올린다.
+	var untradedPairs = make(map[string]bool)
 	for i, friend := range friends {
 		for j, friend2 := range friends {
 			if i == j {
 				continue
 			}
-			pairKey := fmt.Sprintf("%s %s", friend, friend2)
-			AllFriendsFairs[pairKey] = 0
 
-			if GiftPairs[pairKey] > 0 {
-				AllFriendsFairs[pairKey] = GiftPairs[pairKey]
-
-				//선물을 주고받은 기록이 있었다.
-				//준 선물, 받은 선물, 선물지수를 계산할 수 있다.
-				giver := strings.Split(pairKey, " ")[0]
-				taker := strings.Split(pairKey, " ")[1]
-
-				giftInfoMap[giver].GiveMap[taker] = GiftPairs[pairKey]
-				giftInfoMap[giver].TotalGive += GiftPairs[pairKey]
-				giftInfoMap[giver].GiftIndex += GiftPairs[pairKey]
-
-				giftInfoMap[taker].TotalTake += GiftPairs[pairKey]
-				giftInfoMap[taker].GiftIndex -= GiftPairs[pairKey]
+			pairKey := friend + " " + friend2
+			pairKey2 := friend2 + " " + friend
+			if !tradedPairs[pairKey] && !tradedPairs[pairKey2] { //일절 거래 없었던 경우
+				untradedPairs[friend+" "+friend2] = true
+				giftTradeHistory[friend].GiftTrade[friend2] = &GiftCnt{
+					GiveCnt: 0,
+					TakeCnt: 0,
+				}
 			}
 		}
 	}
 
-	//일단 여기까지 주고받았던 선물 정보를을 맵으로 저장한다
+	bytes, _ := json.MarshalIndent(giftTradeHistory, "", "  ")
 
-	//전체 조합을 돈다
+	fmt.Println(string(bytes), "giftTradeHistory 확인하기!! == 맨 처음")
+
+	for _, history := range giftTradeHistory {
+		//선물지수 먼저 계산
+		history.GiftIndex = history.TotalGiveCnt - history.TotalTakeCnt
+	}
+
+	bytes, _ = json.MarshalIndent(giftTradeHistory, "", "  ")
+
+	fmt.Println(string(bytes), "giftTradeHistory 확인하기!! == 선물지수 계산 후")
 
 	var answer = 0
+	for _, history := range giftTradeHistory {
+		for pairName, trade := range history.GiftTrade {
+			//두 사람이 선물을 주고받은 기록이 있다면, 이번 달까지 두 사람 사이에 더 많은 선물을 준 사람이 다음 달에 선물을 하나 받습니다
+			if trade.GiveCnt > trade.TakeCnt {
+				history.NewGift++
+			}
 
-	for pair := range AllFriendsFairs {
-		giver := strings.Split(pair, " ")[0]
-		taker := strings.Split(pair, " ")[1]
-
-		//선물지수에 따른, 다음달에 받을 선물 개수를 계산해야한다.
-		//두 사람이 선물을 주고받은 기록이 있다면, 이번 달까지 두 사람 사이에 더 많은 선물을 준 사람이 다음 달에 선물을 하나 받습니다.
-		if giftInfoMap[giver].GiveMap[taker] > giftInfoMap[taker].GiveMap[giver] {
-			giftInfoMap[giver].WillGet++
-
-			if answer < giftInfoMap[giver].WillGet {
-				answer = giftInfoMap[giver].WillGet
+			if (trade.GiveCnt == 0 && trade.TakeCnt == 0) || (trade.GiveCnt == trade.TakeCnt) {
+				if history.GiftIndex > giftTradeHistory[pairName].GiftIndex {
+					history.NewGift++
+				}
 			}
 		}
+	}
 
-		if giftInfoMap[giver].GiveMap[taker] == giftInfoMap[taker].GiveMap[giver] || (giftInfoMap[giver].GiveMap[taker] == 0 && giftInfoMap[taker].GiveMap[giver] == 0) {
-			giverGiftIndex := giftInfoMap[giver].GiftIndex
-			takerGiftIndex := giftInfoMap[taker].GiftIndex
+	bytes, _ = json.MarshalIndent(giftTradeHistory, "", "  ")
 
-			if giverGiftIndex > takerGiftIndex {
-				giftInfoMap[giver].WillGet++
-				if answer < giftInfoMap[giver].WillGet {
-					answer = giftInfoMap[giver].WillGet
-				}
-			}
+	fmt.Println(string(bytes), "giftTradeHistory 확인하기!! == 다음 달 받는 선물 수 계산 후")
 
-			if giverGiftIndex < takerGiftIndex {
-				giftInfoMap[taker].WillGet++
-				if answer < giftInfoMap[taker].WillGet {
-					answer = giftInfoMap[taker].WillGet
-				}
-			}
+	for _, history := range giftTradeHistory {
+		if history.NewGift >= answer {
+			answer = history.NewGift
 		}
 	}
 
