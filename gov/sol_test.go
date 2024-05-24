@@ -1,157 +1,107 @@
 package main_test
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	"math"
+	"sort"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
-	friends []string
-	gifts   []string
-	expect  int
+	N      int
+	A      int
+	B      int
+	expect int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			friends: []string{"muzi", "ryan", "frodo", "neo"},
-			gifts:   []string{"muzi frodo", "muzi frodo", "ryan muzi", "ryan muzi", "ryan muzi", "frodo muzi", "frodo ryan", "neo muzi"},
-			expect:  2,
+			N:      8,
+			A:      4,
+			B:      7,
+			expect: 3,
 		},
 		{
-			friends: []string{"joy", "brad", "alessandro", "conan", "david"},
-			gifts:   []string{"alessandro brad", "alessandro joy", "alessandro conan", "david alessandro", "alessandro david"},
-			expect:  4,
+			N:      4,
+			A:      1,
+			B:      2,
+			expect: 1,
 		},
 		{
-			friends: []string{"a", "b", "c"},
-			gifts:   []string{"a b", "b a", "c a", "a c", "a c", "c a"},
-			expect:  0,
+			N:      8,
+			A:      4,
+			B:      5,
+			expect: 3,
 		},
 		{
-			friends: []string{"a", "b", "c"},
-			gifts:   []string{"a b"},
-			expect:  2,
+			N:      16,
+			A:      1,
+			B:      9,
+			expect: 4,
+		},
+		{
+			N:      16,
+			A:      9,
+			B:      13,
+			expect: 3,
+		},
+		{
+			N:      8,
+			A:      5,
+			B:      8,
+			expect: 2,
+		},
+		{
+			N:      16,
+			A:      7,
+			B:      8,
+			expect: 1,
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.friends, test.gifts)
+		ans := solution(test.N, test.A, test.B)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-type GiftTradeInfo struct {
-	TotalGiveCnt int
-	TotalTakeCnt int
-	GiftIndex    int
-	NewGift      int
-	GiftTrade    map[string]*GiftCnt
-}
+func solution(n int, a int, b int) int {
+	answer := 0
 
-type GiftCnt struct {
-	GiveCnt int
-	TakeCnt int
-}
+	var aNum int = a
+	var bNum int = b
 
-func solution(friends []string, gifts []string) int {
-	//선물 주고받은 기록 생성하기
+	for {
+		ns := []int{aNum, bNum}
+		sort.Ints(ns)
 
-	var giftTradeHistory = make(map[string]*GiftTradeInfo)
-	for _, friend := range friends {
-		giftTradeHistory[friend] = &GiftTradeInfo{
-			TotalGiveCnt: 0,
-			TotalTakeCnt: 0,
-			GiftTrade:    make(map[string]*GiftCnt),
+		if int(math.Abs(float64(aNum-bNum))) == 1 && ns[1]%2 == 0 {
+			break
 		}
+
+		if aNum%2 == 0 {
+			aNum = aNum / 2
+		}
+
+		if aNum%2 == 1 {
+			aNum = aNum/2 + 1
+		}
+
+		if bNum%2 == 0 {
+			bNum = bNum / 2
+		}
+
+		if bNum%2 == 1 {
+			bNum = bNum/2 + 1
+		}
+
+		answer++
 	}
 
-	//선물 거래가 없었던 친구들 목록을 만들어야 한다.
-	var tradedPairs = make(map[string]bool)
-	for _, gift := range gifts {
-		tradedPairs[gift] = true
-
-		giver := strings.Split(gift, " ")[0]
-		taker := strings.Split(gift, " ")[1]
-
-		giftTradeHistory[giver].TotalGiveCnt++
-		giftTradeHistory[taker].TotalTakeCnt++
-
-		if giftTradeHistory[giver].GiftTrade[taker] == nil {
-			giftTradeHistory[giver].GiftTrade[taker] = &GiftCnt{}
-		}
-		giftTradeHistory[giver].GiftTrade[taker].GiveCnt++
-
-		if giftTradeHistory[taker].GiftTrade[giver] == nil {
-			giftTradeHistory[taker].GiftTrade[giver] = &GiftCnt{}
-		}
-		giftTradeHistory[taker].GiftTrade[giver].TakeCnt++
-
-	}
-	//이걸 기준으로 판단한다
-	//일단 쌍을 무조건 다 만들어서 거래 안한 리스트에 올린다.
-	var untradedPairs = make(map[string]bool)
-	for i, friend := range friends {
-		for j, friend2 := range friends {
-			if i == j {
-				continue
-			}
-
-			pairKey := friend + " " + friend2
-			pairKey2 := friend2 + " " + friend
-			if !tradedPairs[pairKey] && !tradedPairs[pairKey2] { //일절 거래 없었던 경우
-				untradedPairs[friend+" "+friend2] = true
-				giftTradeHistory[friend].GiftTrade[friend2] = &GiftCnt{
-					GiveCnt: 0,
-					TakeCnt: 0,
-				}
-			}
-		}
-	}
-
-	bytes, _ := json.MarshalIndent(giftTradeHistory, "", "  ")
-
-	fmt.Println(string(bytes), "giftTradeHistory 확인하기!! == 맨 처음")
-
-	for _, history := range giftTradeHistory {
-		//선물지수 먼저 계산
-		history.GiftIndex = history.TotalGiveCnt - history.TotalTakeCnt
-	}
-
-	bytes, _ = json.MarshalIndent(giftTradeHistory, "", "  ")
-
-	fmt.Println(string(bytes), "giftTradeHistory 확인하기!! == 선물지수 계산 후")
-
-	var answer = 0
-	for _, history := range giftTradeHistory {
-		for pairName, trade := range history.GiftTrade {
-			//두 사람이 선물을 주고받은 기록이 있다면, 이번 달까지 두 사람 사이에 더 많은 선물을 준 사람이 다음 달에 선물을 하나 받습니다
-			if trade.GiveCnt > trade.TakeCnt {
-				history.NewGift++
-			}
-
-			if (trade.GiveCnt == 0 && trade.TakeCnt == 0) || (trade.GiveCnt == trade.TakeCnt) {
-				if history.GiftIndex > giftTradeHistory[pairName].GiftIndex {
-					history.NewGift++
-				}
-			}
-		}
-	}
-
-	bytes, _ = json.MarshalIndent(giftTradeHistory, "", "  ")
-
-	fmt.Println(string(bytes), "giftTradeHistory 확인하기!! == 다음 달 받는 선물 수 계산 후")
-
-	for _, history := range giftTradeHistory {
-		if history.NewGift >= answer {
-			answer = history.NewGift
-		}
-	}
+	answer++
 
 	return answer
 }
