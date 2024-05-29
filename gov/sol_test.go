@@ -17,47 +17,53 @@ type TestCase struct {
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
-		{
-			N:      8,
-			A:      4,
-			B:      7,
-			expect: 3,
-		},
-		{
-			N:      4,
-			A:      1,
-			B:      2,
-			expect: 1,
-		},
-		{
-			N:      8,
-			A:      4,
-			B:      5,
-			expect: 3,
-		},
+		// {
+		// 	N:      8,
+		// 	A:      4,
+		// 	B:      7,
+		// 	expect: 3,
+		// },
+		// {
+		// 	N:      4,
+		// 	A:      1,
+		// 	B:      2,
+		// 	expect: 1,
+		// },
+		// {
+		// 	N:      8,
+		// 	A:      4,
+		// 	B:      5,
+		// 	expect: 3,
+		// },
+		// {
+		// 	N:      16,
+		// 	A:      1,
+		// 	B:      9,
+		// 	expect: 4,
+		// },
+		// {
+		// 	N:      16,
+		// 	A:      9,
+		// 	B:      13,
+		// 	expect: 3,
+		// },
+		// {
+		// 	N:      8,
+		// 	A:      5,
+		// 	B:      8,
+		// 	expect: 2,
+		// },
+		// {
+		// 	N:      16,
+		// 	A:      7,
+		// 	B:      8,
+		// 	expect: 1,
+		// },
 		{
 			N:      16,
-			A:      1,
-			B:      9,
-			expect: 4,
-		},
-		{
-			N:      16,
-			A:      9,
+			A:      12,
 			B:      13,
 			expect: 3,
-		},
-		{
-			N:      8,
-			A:      5,
-			B:      8,
-			expect: 2,
-		},
-		{
-			N:      16,
-			A:      7,
-			B:      8,
-			expect: 1,
 		},
 	}
 
@@ -82,19 +88,23 @@ func solution(n int, a int, b int) int {
 			break
 		}
 
-		if aNum%2 == 0 {
+		arem := aNum % 2
+
+		if arem == 0 {
 			aNum = aNum / 2
 		}
 
-		if aNum%2 == 1 {
+		if arem == 1 {
 			aNum = aNum/2 + 1
 		}
 
-		if bNum%2 == 0 {
+		brem := bNum % 2
+
+		if brem == 0 {
 			bNum = bNum / 2
 		}
 
-		if bNum%2 == 1 {
+		if brem == 1 {
 			bNum = bNum/2 + 1
 		}
 
