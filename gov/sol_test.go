@@ -30,6 +30,46 @@ func TestSolution(t *testing.T) {
 			tangerine: []int{1, 1, 1, 1, 2, 2, 2, 3},
 			expect:    1,
 		},
+		{
+			k:         6,
+			tangerine: []int{1, 2, 3, 4, 5, 6},
+			expect:    6,
+		},
+		{
+			k:         1,
+			tangerine: []int{1},
+			expect:    1,
+		},
+		{
+			k:         1,
+			tangerine: []int{1, 1},
+			expect:    1,
+		},
+		{
+			k:         3,
+			tangerine: []int{1, 1, 2, 2},
+			expect:    2,
+		},
+		{
+			k:         4,
+			tangerine: []int{1, 1, 2, 4},
+			expect:    3,
+		},
+		{
+			k:         6,
+			tangerine: []int{1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+			expect:    4,
+		},
+		{
+			k:         5,
+			tangerine: []int{2, 2, 3, 3, 4, 4},
+			expect:    3,
+		},
+		{
+			k:         5, //반례...
+			tangerine: []int{2, 2, 2, 2, 3, 3, 3, 4, 4},
+			expect:    2,
+		},
 	}
 
 	for _, test := range tests {
@@ -85,7 +125,12 @@ func solution(k int, tangerine []int) int {
 				return answer
 			}
 
-			emptySpace -= cnt
+			if emptySpace < cnt { //이거 추가하니까 통과됨...; 음수인데도 계속 빼고 추가하는 경우가 있었구나ㅠㅠ
+				emptySpace = 0
+			} else {
+				emptySpace -= cnt
+			}
+
 			answer++
 			cntSizeMap[cnt] = cntSizeMap[cnt][1:]
 		}
