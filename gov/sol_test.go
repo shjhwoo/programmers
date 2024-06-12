@@ -7,100 +7,91 @@ import (
 )
 
 type TestCase struct {
-	n      int
-	left   int64
-	right  int64
-	expect []int
+	progresses []int
+	speeds     []int
+	expect     []int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			n:      3,
-			left:   2,
-			right:  5,
-			expect: []int{3, 2, 2, 3},
+			progresses: []int{93, 30, 55},
+			speeds:     []int{1, 30, 5},
+			expect:     []int{2, 1},
 		},
 		{
-			n:      4,
-			left:   7,
-			right:  14,
-			expect: []int{4, 3, 3, 3, 4, 4, 4, 4},
+			progresses: []int{95, 90, 99, 99, 80, 99},
+			speeds:     []int{1, 1, 1, 1, 1, 1},
+			expect:     []int{1, 3, 2},
+		},
+		{
+			progresses: []int{90, 91, 92, 93, 94, 95},
+			speeds:     []int{1, 1, 1, 1, 1, 1}, // 10, 9, 8, 7, 6, 5
+			expect:     []int{6},
+		},
+		{
+			progresses: []int{90, 91, 92, 93, 94, 95},
+			speeds:     []int{1, 1, 1, 1, 1, 1}, // 10, 9, 8, 7, 6, 5
+			expect:     []int{6},
+		},
+		{
+			progresses: []int{90, 91, 92, 93, 94, 90},
+			speeds:     []int{1, 1, 1, 1, 1, 1}, // 10, 9, 8, 7, 6, 10
+			expect:     []int{6},
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.n, test.left, test.right)
+		ans := solution(test.progresses, test.speeds)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(n int, left int64, right int64) []int {
+func solution(progresses []int, speeds []int) []int {
 
-	/*
-		주기: n
-		left에 들어가는 숫자를 알아낸다
-			=> (left + 1)를 n으로 일단 나눠봄.
-			나머지가 0이면 몫 그 자체가 몇번째 행인지를 알랴준다.
-			나머지가 0이 아니면 몫 + 1 값이 몇번째 행인지를 알 수 있다.
+	//일단 배열을 돌면서 작업 완료까지 필요한 기간을 계산해본다
+	var remainDaysForDeploy []int
+	for i := 0; i < len(progresses); i++ {
+		rm := (100 - progresses[i]) % speeds[i]
+		daysNeed := (100 - progresses[i]) / speeds[i]
+		if rm > 0 {
+			daysNeed++
+		}
 
-			나머지가 0이라는 것은 맨 끝 열임을 뜻한다
-			나머지가 0보다 큰 숫자면은 몇번째 열인지를 알 수 있다.
+		remainDaysForDeploy = append(remainDaysForDeploy, daysNeed)
+	}
 
-			( 7 + 1 ) 나누기 4 = 몫 2 나머지 0 : 2행 4열. => 4가 들어간다.
-			( 2 + 1 ) 나누기 3 = 몫 1 나머지 0 : 1행 3열. => 3이 들어간다.
-
-			(6 + 1) 나누기 4 = 몫 1 나머지 3 : 2행 3열. => 3이 들어간다.
-
-		right에 들어가는 숫자를 알아낸다
-		left에서 right 까지 차지하는 칸 수를 세본다 = right - left + 1 개의 숫자가 들어간다.
-		=> answer의 길이가 right - left + 1 이 될때까지 for 문을 실행시키고,
-		for 문 안에서 다음 작업을 진행한다
-	*/
-
+	//순회하면서 뭉개버리기.::
 	var answer []int
-	for i := left; i <= right; i++ {
-		row, col := findRowColFromIdx(n, i)
-		answer = append(answer, findNumByRowCol(row, col))
+
+	for i, rmDays := range remainDaysForDeploy {
+		if i == 0 {
+			answer = append(answer, 1)
+			continue
+		}
+
+		//정확한 조건: 거꾸로 올라가면서 모두 다 훑어봤을 때 자기보다 더 큰 수가 진짜 하나도 없을 때만 추가를 하고,
+		//자기와 같거나 더 큰 수가 있으면은 그냥 더해주면 된다.
+		//자기보다 같거나 더 큰 수를 발견한 그 순간 탐색을 중지함으로서 속도를 빨리할 수 있겠다
+
+		if hasBiggerOrEqualNumBeforeMe(remainDaysForDeploy[:i], rmDays) {
+			answer[len(answer)-1]++
+		} else {
+			answer = append(answer, 1)
+		}
 	}
 
 	return answer
 }
 
-//행과 열 정보를 주면 그 자리에 들어가야 하는 숫자가 뭔지 알아내면 되고, 그 규칙을 만들면 된다
-//left 의 행과 열 정보부터 파악 => ... => right의 행과 열 정보 파악한다.
-//그 사이에 있는 값들의 행과 열 정보를 파악 => 그 사이 숫자들에 대한
-
-func findRowColFromIdx(n int, left int64) (int, int) {
-	var rowNo int
-	var columnNo int
-
-	remainder := (left + 1) % int64(n)
-
-	if remainder == 0 {
-		columnNo = n
-		rowNo = int((left + 1) / int64(n))
-	} else {
-		columnNo = int(remainder)
-		rowNo = int((left+1)/int64(n)) + 1
+func hasBiggerOrEqualNumBeforeMe(rmDaysList []int, rmDays int) bool {
+	for i := len(rmDaysList) - 1; i >= 0; i-- {
+		pNum := rmDaysList[i]
+		if pNum >= rmDays {
+			return true
+		}
 	}
 
-	return rowNo, columnNo
-}
-
-func findNumByRowCol(row int, col int) int {
-	if row == col {
-		return row
-	}
-
-	if row > col {
-		return row
-	}
-
-	if row < col {
-		return col
-	}
-
-	return 0
+	return false
 }
