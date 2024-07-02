@@ -8,44 +8,79 @@ import (
 
 type TestCase struct {
 	numbers []int
-	target  int
 	expect  []int
 }
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			numbers: []int{2, 3, 4},
-			target:  6,
-			expect:  []int{0, 2},
+			numbers: []int{2, 3, 3, 5},
+			expect:  []int{3, 5, 5, -1},
 		},
 		{
 			numbers: []int{9, 1, 5, 3, 6, 2},
-			target:  11,
-			expect:  []int{2, 4},
+			expect:  []int{-1, 5, 6, 6, -1, -1},
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.numbers, test.target)
+		ans := solution(test.numbers)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(numbers []int, target int) []int {
-	m := make(map[int]int)
+/*
+                  i
+   9, 1, 5, 3, 6, 2
+   -1 5  6  6 -1 -1 j
+*/
 
-	//자료의 검색과 저장을 동시에 진행한다. (이중 for문을 사용하지 않기 위해서는 한쪽을 해시테이블로 만들어놓는다 == 맵 자료구조.
-	//따로 맵을 먼저 다 만들수도 있겠지만, 코드 간소화를 위해서는 이 방법이 맞다.)
-	//직접 배열을 순회해보면서 아래 코드 구현 가능..
+func solution(numbers []int) []int {
+	var answer []int
 
-	//포인트는 나머지 짝이 되는 수를 뺄셈으로 찾아 낼 수 있었다는 것.. => 시간 단축..
-	for i, num := range numbers {
-		if j, ok := m[target-num]; ok {
-			return []int{j, i}
+	var dictionary = make(map[int]int) //특정 인덱스 위치 - 그 인덱스 위치에 해당하는 수의 뒷 큰수의 인덱스
+	//일단 순회하는 건 필요하다.모든 숫자에 대해서 뒷 큰 수를 알아야 하니깐.!!
+	for i := 0; i < len(numbers); i++ {
+		leftNum := numbers[i]
+		var found bool
+
+		var boundaryIdx int
+
+		if dictionary[i-1] > 0 && i != dictionary[i-1] {
+			//끝까지 돌 필요가 없다.
+			boundaryIdx = dictionary[i-1] + 1
+		} else {
+			//끝까지 돌아야 한다.
+			boundaryIdx = len(numbers)
 		}
-		m[num] = i
+
+		for j := i + 1; j < boundaryIdx; j++ {
+			rightNum := numbers[j]
+			if leftNum < rightNum {
+				dictionary[i] = j
+				answer = append(answer, rightNum)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			dictionary[i] = -1
+			answer = append(answer, -1)
+		}
+		//뒷 큰 수를 빨리 찾아야 한다.
+		/*
+			일단 맵이 비어 있을 때는 다 돌 수 밖에 없음..
+			일단 발견하면 넣는다.
+
+			5,3,1,1,6 같은 케이스라면 => 5의 뒷 큰수 6에 대한 인덱스를 저장.. == 이 말뜻은 결국에는 5와 6 사이에는,
+			5보다 작거나 같은 숫자만 있다는 것을 의미한다.
+			그럼 3의 차례에서는 굳이 전체 배열의 끝까지 다 볼 필요가 없이, 6까지만 보면 된다는 소리다.
+
+			4,3,2,1,1 케이스의 경우:
+		*/
 	}
-	return []int{}
+
+	return answer
 }
