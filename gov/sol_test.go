@@ -13,13 +13,17 @@ type TestCase struct {
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
-		// {
-		// 	numbers: []int{2, 3, 3, 5},
-		// 	expect:  []int{3, 5, 5, -1},
-		// },
+		{
+			numbers: []int{2, 3, 3, 5},
+			expect:  []int{3, 5, 5, -1},
+		},
 		{
 			numbers: []int{9, 1, 5, 3, 6, 2},
 			expect:  []int{-1, 5, 6, 6, -1, -1},
+		},
+		{
+			numbers: []int{80, 20, 4, 5, 79, 60, 10},
+			expect:  []int{-1, 79, 5, 79, -1, -1, -1},
 		},
 	}
 
@@ -30,16 +34,11 @@ func TestSolution(t *testing.T) {
 	}
 }
 
-/*
-                  i
-   9, 1, 5, 3, 6, 2
-   -1 5  6  6 -1 -1 j
-*/
-
 func solution(numbers []int) []int {
 	var answer []int
 
-	var compareMap = make(map[int]int)
+	var compareSlice []int
+	var compareMap = make(map[int]int) //숫자와 그 index
 
 	//일단 순회하는 건 필요하다.모든 숫자에 대해서 뒷 큰 수를 알아야 하니깐.!!
 	for i := 0; i < len(numbers); i++ {
@@ -51,6 +50,7 @@ func solution(numbers []int) []int {
 			for j := len(numbers) - 1; j > i; j-- {
 				if j == len(numbers)-1 {
 					compareSlice = append(compareSlice, numbers[j])
+					compareMap[numbers[j]] = j
 				} else {
 					//이제는 append를 앞에 해야 한다: 규칙 - 붙이는 수가 현재 맨 앞의 수보다 같거나 작으면 그대로 붙이고, 크다면 한번 shift해주고 붙인다.
 					currentNum := compareSlice[0]
@@ -61,14 +61,20 @@ func solution(numbers []int) []int {
 
 					if currentNum < numberToShift {
 						compareSlice = append([]int{numberToShift}, compareSlice[1:]...)
+						delete(compareMap, currentNum)
 					}
+
+					compareMap[numberToShift] = j
 				}
 			}
 		}
 
 		//비교배열을 만들었으니까 그것만 가지고 뒤 큰 수를 찾아야 한다.
 		for c := 0; c < len(compareSlice); c++ {
-			if numbers[i] < compareSlice[c] {
+
+			compareIdx := compareMap[compareSlice[c]]
+
+			if numbers[i] < compareSlice[c] && i < compareIdx {
 				answer = append(answer, compareSlice[c])
 				break
 			}
