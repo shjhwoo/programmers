@@ -37,54 +37,36 @@ func TestSolution(t *testing.T) {
 func solution(numbers []int) []int {
 	var answer []int
 
-	var compareSlice []int
-	var compareMap = make(map[int]int) //숫자와 그 index
-
-	//일단 순회하는 건 필요하다.모든 숫자에 대해서 뒷 큰 수를 알아야 하니깐.!!
 	for i := 0; i < len(numbers); i++ {
-		if i == 0 {
-			/*
-				일단 처음에는 비교배열을 만들어야 한다
-				그러므로 일단 비교할 숫자를 뒤에서부터 순회한다
-			*/
-			for j := len(numbers) - 1; j > i; j-- {
-				if j == len(numbers)-1 {
-					compareSlice = append(compareSlice, numbers[j])
-					compareMap[numbers[j]] = j
-				} else {
-					//이제는 append를 앞에 해야 한다: 규칙 - 붙이는 수가 현재 맨 앞의 수보다 같거나 작으면 그대로 붙이고, 크다면 한번 shift해주고 붙인다.
-					currentNum := compareSlice[0]
-					numberToShift := numbers[j]
-					if currentNum >= numberToShift {
-						compareSlice = append([]int{numberToShift}, compareSlice...)
-					}
+		answer = append(answer, -1)
+	}
 
-					if currentNum < numberToShift {
-						compareSlice = append([]int{numberToShift}, compareSlice[1:]...)
-						delete(compareMap, currentNum)
-					}
+	var stack []int
 
-					compareMap[numberToShift] = j
-				}
-			}
+	for i := len(numbers) - 1; i >= 0; i-- {
+
+		for len(stack) > 0 && numbers[i] >= stack[len(stack)-1] {
+			stack = stack[:len(stack)-1]
 		}
 
-		//비교배열을 만들었으니까 그것만 가지고 뒤 큰 수를 찾아야 한다.
-		for c := 0; c < len(compareSlice); c++ {
-
-			compareIdx := compareMap[compareSlice[c]]
-
-			if numbers[i] < compareSlice[c] && i < compareIdx {
-				answer = append(answer, compareSlice[c])
-				break
-			}
-
-			if c == len(compareSlice)-1 {
-				answer = append(answer, -1)
-			}
+		if len(stack) > 0 && numbers[i] < stack[len(stack)-1] {
+			answer[i] = stack[len(stack)-1]
 		}
 
+		stack = append(stack, numbers[i])
 	}
 
 	return answer
 }
+
+//https://velog.io/@rvbear/%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%A8%B8%EC%8A%A4-%EB%92%A4%EC%97%90-%EC%9E%88%EB%8A%94-%ED%81%B0-%EC%88%98-%EC%B0%BE%EA%B8%B0Java
+/*
+
+이중 for문이 맞지만 배열 전체 길이를 이중으로 순회하지 않는다. 물론, 두 수 중간에, 작은 수가 너무 많다면 시간적 제한이 있을 수 있다. 분명.
+스택을 사용 => 더 큰 수가 나오면 밑에 수가 작을때 pop 시켜버린다 => 자신보다 작은 수를 없애버리는거니깐 가까운 뒤 큰 수를 빨리 찾을 수 있다.
+
+즉 이중포문을 도는 시간을 더 줄이는 방법임
+
+-1로 초기화는 => 초기값 설정으로 뒤 큰수 없는 경우 더 빨리 처리.
+
+*/
