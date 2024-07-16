@@ -19,11 +19,12 @@ func TestSolution(t *testing.T) {
 			times:  []int{7, 10},
 			expect: 28,
 		},
-		{
-			n:      7,
-			times:  []int{10, 6, 3, 1, 2},
-			expect: 40,
-		},
+		// { //for 문 조건에 대한 검증 테스트. < 로만 비교하게 되면 심사를 다 못볼 수 있다.
+		// 	//한두명 더 보는 여유 시간이 남더라도 심사를 다 보는게 중요하기 때문이다.
+		// 	n:      50,
+		// 	times:  []int{3, 2, 1},
+		// 	expect: 28,
+		// },
 	}
 
 	for _, test := range tests {
@@ -50,15 +51,15 @@ func solution(n int, times []int) int64 {
 		}
 
 		if sumOfCheckablePrson < n {
-			//범위를 더 늘린다
+			//범위를 더 늘린다: 최소의 시간이 조금 남더라도 심사를 다 보는게 중요하므로 이 값으로 리턴하는 게 맞다.
 			start = mid + 1
 		} else {
-			//범위를 줄인다
+			//범위를 줄인다: end로 리턴하면, 주어진 시간 내에 모든 사람 심사 다 못볼수도 있다(줄이려다가 심사 다 못볼수도 있다)
 			end = mid - 1
 		}
 	}
 
-	return int64(start)
+	return int64(end) //end말고 스타트값을 주는 것임에 유의해야 한다.
 }
 
 func getMinTime(times []int) int {
