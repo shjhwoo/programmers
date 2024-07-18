@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"fmt"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -85,77 +84,37 @@ order : 택배 기사님이 원하는 상자 순서
 
 func solution(order []int) int {
 
-	/*
-
-		일단 주어진 order 배열을 순회해야 한다.
-
-		4 3 1 2 5 를 가지고 생각해보자.
-
-		0번째 인덱스: 4를 넣어야 한다.
-		하지만 배열은 1부터 시작한다. => 4라는 숫자가 나올때까지 스택에 밀어 넣는다,
-		즉 subconveyerStack = append(reverse([]int{1,2,3}), subconveyerStack...)
-		즉, 이 과정 후에 스택에서 제일 먼저 뺄 수 있는 숫자는 3이 된다!
-		택배상자를 실었기 때문에 카운트 1 한다
-
-		1번째 인덱스: 3을 넣어야 한다.
-		즉 1번째 인덱스 부터는, 기존 컨베이어벨트와 보조 벨트를 모두 봐야 한다.
-		보조벨트를 먼저 본다. 첫번째 원소로서 3이 있기 때문에 빼온다.
-		즉 subconveyerStack = subconveyerStack[1:] 이 된다.
-		즉 이 과정 후에 스택에서 제일 먼저 뺄 수 있는 숫자는 2가 된다!
-		택배상자를 실었기 때문에 카운트 1 한다
-
-		2번째 인덱스: 1을 넣어야 한다.
-		숫자가 앞의 숫자 3보다 작기 때문에 분명히 얘는 보조 컨테이너에 들어가 있을거다.
-		하지만 보조 컨베이어벨트는 2부터 뺄수있기 때문에, 여기서 stop해야 한다.
-		break!!
-	*/
-
 	var answer int
 
-	var firstBoxThatCanBegetFromConveyer = 1
-	firstBoxThatCanBegetFromSubConveyer := 0
+	var subConveyerStack []int
 
-	fmt.Println("firstBoxThatCanBegetFromSubConveyer", firstBoxThatCanBegetFromSubConveyer)
+	var conveyerTop = 1
 
-	for idx, num := range order {
-		if idx == 0 {
-			if num > 1 {
-				firstBoxThatCanBegetFromConveyer = num + 1
-				firstBoxThatCanBegetFromSubConveyer = num - 1
-			} else {
-				firstBoxThatCanBegetFromConveyer = num + 1
-			}
+	for _, num := range order {
+
+		if num == conveyerTop {
 			answer++
+			conveyerTop++
 		} else {
-
-			//체크조건: 현재 컨베이어에서 뺄 수 있는 첫번째 박스의 번호가 현재 트럭에 실어야 하는 박스의 번호와 같다/다르다 여부
-
-			//다른경우
-			if firstBoxThatCanBegetFromConveyer != num {
-
-				//스택에서 찾아본다.
-				if firstBoxThatCanBegetFromSubConveyer == num {
-					firstBoxThatCanBegetFromSubConveyer--
+			//다른 경우. 일단 보조 컨베이어에 넣어둔다.
+			//넣기 전에 보조컨베이어에 첫번째 상자를 보고 일치하는게 있는지 확인한다.
+			if len(subConveyerStack) != 0 {
+				if num == subConveyerStack[0] {
 					answer++
+					subConveyerStack = subConveyerStack[1:]
 					continue
-				} else if firstBoxThatCanBegetFromSubConveyer > num { //이 조건이 빠졌었다. 왜 필요하냐면 보조 컨베이어에서도 더 이상 뺄 수 없다면 바로 중단해야 하니까. 안그랬으면 계속 빼도 되는걸로 조건이 바뀌게 되어서 오답나온다.
+				}
+
+				if num < subConveyerStack[0] {
 					break
 				}
-
-				if firstBoxThatCanBegetFromConveyer < num {
-					//또 스택에 넣고 연산해야함
-					firstBoxThatCanBegetFromSubConveyer = num - 1
-					firstBoxThatCanBegetFromConveyer = num + 1
-
-					answer++
-					continue
-				}
-
-			} else {
-				//같으면 그대로 실으면 된다
-				firstBoxThatCanBegetFromConveyer = num + 1
-				answer++
 			}
+
+			for i := num - 1; i > 0; i-- {
+				subConveyerStack = append(subConveyerStack, i)
+				conveyerTop++
+			}
+			answer++
 		}
 	}
 
