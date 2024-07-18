@@ -122,6 +122,8 @@ func solution(order []int) int {
 			if num > 1 {
 				firstBoxThatCanBegetFromConveyer = num + 1
 				firstBoxThatCanBegetFromSubConveyer = num - 1
+			} else {
+				firstBoxThatCanBegetFromConveyer = num + 1
 			}
 			answer++
 		} else {
@@ -135,17 +137,19 @@ func solution(order []int) int {
 				if firstBoxThatCanBegetFromSubConveyer == num {
 					firstBoxThatCanBegetFromSubConveyer--
 					answer++
+					continue
+				} else if firstBoxThatCanBegetFromSubConveyer > num { //이 조건이 빠졌었다. 왜 필요하냐면 보조 컨베이어에서도 더 이상 뺄 수 없다면 바로 중단해야 하니까. 안그랬으면 계속 빼도 되는걸로 조건이 바뀌게 되어서 오답나온다.
+					break
 				}
 
-				//더 큰 경우
 				if firstBoxThatCanBegetFromConveyer < num {
 					//또 스택에 넣고 연산해야함
 					firstBoxThatCanBegetFromSubConveyer = num - 1
 					firstBoxThatCanBegetFromConveyer = num + 1
 
 					answer++
+					continue
 				}
-				//더 작은 경우는 있을 수 없다
 
 			} else {
 				//같으면 그대로 실으면 된다
