@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"fmt"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -32,6 +33,10 @@ func TestSolution(t *testing.T) {
 		{
 			order:  []int{5, 4, 3, 2, 1, 10, 9, 8, 7, 6, 11, 12},
 			expect: 12,
+		},
+		{
+			order:  []int{5, 4, 2, 3, 1, 10, 9, 8, 7, 6, 11, 12},
+			expect: 2,
 		},
 	}
 
@@ -83,38 +88,52 @@ order : 택배 기사님이 원하는 상자 순서
 */
 
 func solution(order []int) int {
-
 	var answer int
 
-	var subConveyerStack []int
+	var firstBoxThatCanBegetFromConveyer = 1
+	firstBoxThatCanBegetFromSubConveyer := 0
 
-	var conveyerTop = 1
+	fmt.Println("firstBoxThatCanBegetFromSubConveyer", firstBoxThatCanBegetFromSubConveyer)
 
-	for _, num := range order {
-
-		if num == conveyerTop {
+	for idx, num := range order {
+		if idx == 0 {
+			if num > 1 {
+				firstBoxThatCanBegetFromConveyer = num + 1
+				firstBoxThatCanBegetFromSubConveyer = num - 1
+			} else {
+				firstBoxThatCanBegetFromConveyer = num + 1
+			}
 			answer++
-			conveyerTop++
 		} else {
-			//다른 경우. 일단 보조 컨베이어에 넣어둔다.
-			//넣기 전에 보조컨베이어에 첫번째 상자를 보고 일치하는게 있는지 확인한다.
-			if len(subConveyerStack) != 0 {
-				if num == subConveyerStack[0] {
+
+			//체크조건: 현재 컨베이어에서 뺄 수 있는 첫번째 박스의 번호가 현재 트럭에 실어야 하는 박스의 번호와 같다/다르다 여부
+
+			//다른경우
+			if firstBoxThatCanBegetFromConveyer != num {
+
+				//스택에서 찾아본다.
+				if firstBoxThatCanBegetFromSubConveyer == num {
+					firstBoxThatCanBegetFromSubConveyer--
 					answer++
-					subConveyerStack = subConveyerStack[1:]
+					continue
+				} else if firstBoxThatCanBegetFromSubConveyer > num { //이 조건이 빠졌었다. 왜 필요하냐면 보조 컨베이어에서도 더 이상 뺄 수 없다면 바로 중단해야 하니까. 안그랬으면 계속 빼도 되는걸로 조건이 바뀌게 되어서 오답나온다.
+					break
+				}
+
+				if firstBoxThatCanBegetFromConveyer < num {
+					//또 스택에 넣고 연산해야함
+					firstBoxThatCanBegetFromSubConveyer = num - 1
+					firstBoxThatCanBegetFromConveyer = num + 1
+
+					answer++
 					continue
 				}
 
-				if num < subConveyerStack[0] {
-					break
-				}
+			} else {
+				//같으면 그대로 실으면 된다
+				firstBoxThatCanBegetFromConveyer = num + 1
+				answer++
 			}
-
-			for i := num - 1; i > 0; i-- {
-				subConveyerStack = append(subConveyerStack, i)
-				conveyerTop++
-			}
-			answer++
 		}
 	}
 
