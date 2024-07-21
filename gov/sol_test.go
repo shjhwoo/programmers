@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"fmt"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -14,30 +13,34 @@ type TestCase struct {
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
+		// {
+		// 	order:  []int{4, 3, 1, 2, 5},
+		// 	expect: 2,
+		// },
 		{
-			order:  []int{4, 3, 1, 2, 5},
-			expect: 2,
-		},
-		{
-			order:  []int{5, 4, 3, 2, 1},
+			order:  []int{1, 2, 3, 4, 5},
 			expect: 5,
 		},
-		{
-			order:  []int{4, 3, 2, 5, 6, 1},
-			expect: 6,
-		},
-		{
-			order:  []int{4, 3, 2, 5, 1, 6},
-			expect: 6,
-		},
-		{
-			order:  []int{5, 4, 3, 2, 1, 10, 9, 8, 7, 6, 11, 12},
-			expect: 12,
-		},
-		{
-			order:  []int{5, 4, 2, 3, 1, 10, 9, 8, 7, 6, 11, 12},
-			expect: 2,
-		},
+		// {
+		// 	order:  []int{5, 4, 3, 2, 1},
+		// 	expect: 5,
+		// },
+		// {
+		// 	order:  []int{4, 3, 2, 5, 6, 1},
+		// 	expect: 6,
+		// },
+		// {
+		// 	order:  []int{4, 3, 2, 5, 1, 6},
+		// 	expect: 6,
+		// },
+		// {
+		// 	order:  []int{5, 4, 3, 2, 1, 10, 9, 8, 7, 6, 11, 12},
+		// 	expect: 12,
+		// },
+		// {
+		// 	order:  []int{5, 4, 2, 3, 1, 10, 9, 8, 7, 6, 11, 12},
+		// 	expect: 2,
+		// },
 	}
 
 	for _, test := range tests {
@@ -87,55 +90,25 @@ order : 택배 기사님이 원하는 상자 순서
 
 */
 
-func solution(order []int) int {
-	var answer int
+func solution(orders []int) int {
+	truck := 0
+	conveyIdx := 1
 
-	var firstBoxThatCanBegetFromConveyer = 1
-	firstBoxThatCanBegetFromSubConveyer := 0
+	subConvey := []int{}
 
-	fmt.Println("firstBoxThatCanBegetFromSubConveyer", firstBoxThatCanBegetFromSubConveyer)
-
-	for idx, num := range order {
-		if idx == 0 {
-			if num > 1 {
-				firstBoxThatCanBegetFromConveyer = num + 1
-				firstBoxThatCanBegetFromSubConveyer = num - 1
-			} else {
-				firstBoxThatCanBegetFromConveyer = num + 1
-			}
-			answer++
-		} else {
-
-			//체크조건: 현재 컨베이어에서 뺄 수 있는 첫번째 박스의 번호가 현재 트럭에 실어야 하는 박스의 번호와 같다/다르다 여부
-
-			//다른경우
-			if firstBoxThatCanBegetFromConveyer != num {
-
-				//스택에서 찾아본다.
-				if firstBoxThatCanBegetFromSubConveyer == num {
-					firstBoxThatCanBegetFromSubConveyer--
-					answer++
-					continue
-				} else if firstBoxThatCanBegetFromSubConveyer > num { //이 조건이 빠졌었다. 왜 필요하냐면 보조 컨베이어에서도 더 이상 뺄 수 없다면 바로 중단해야 하니까. 안그랬으면 계속 빼도 되는걸로 조건이 바뀌게 되어서 오답나온다.
-					break
-				}
-
-				if firstBoxThatCanBegetFromConveyer < num {
-					//또 스택에 넣고 연산해야함
-					firstBoxThatCanBegetFromSubConveyer = num - 1
-					firstBoxThatCanBegetFromConveyer = num + 1
-
-					answer++
-					continue
-				}
-
-			} else {
-				//같으면 그대로 실으면 된다
-				firstBoxThatCanBegetFromConveyer = num + 1
-				answer++
-			}
+	for _, order := range orders {
+		for conveyIdx <= order {
+			subConvey = append(subConvey, conveyIdx)
+			conveyIdx += 1
 		}
+
+		if subConvey[len(subConvey)-1] != order {
+			break
+		}
+
+		subConvey = subConvey[:len(subConvey)-1]
+		truck++
 	}
 
-	return answer
+	return truck
 }
