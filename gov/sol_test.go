@@ -42,11 +42,17 @@ func TestSolution(t *testing.T) {
 		// 	n:      4,
 		// 	expect: -1,
 		// },
+		// {
+		// 	x:      2,
+		// 	y:      42,
+		// 	n:      5,
+		// 	expect: 3, //(2+5) * 3 * 2
+		// },
 		{
 			x:      2,
-			y:      42,
+			y:      21,
 			n:      5,
-			expect: 3, //(2+5) * 3 * 2
+			expect: 2, //(2+5) * 3 ..바로 앞의 케이스를 생각했을 때 재귀적으로 구현할 수 있다.
 		},
 	}
 
@@ -86,6 +92,9 @@ func solution(x int, y int, n int) int {
 	}
 
 	var answer = nAddTime + mulTime
+	if answer == 0 {
+		return -1
+	}
 
 	//nAddTime을 .. 1씩 줄여나가면서 절충점을 찾는다..?
 	for i := nAddTime - 1; i >= 0; i-- {
@@ -95,7 +104,7 @@ func solution(x int, y int, n int) int {
 			continue
 		}
 
-		mulTime = calcMulTimeBy2or3(mul)
+		mulTime = calcMulTimeBy2or3orAddN(mul, x, n) //여기도 잘못됨.
 		if mulTime == 0 {
 			continue
 		}
@@ -109,17 +118,21 @@ func solution(x int, y int, n int) int {
 	return answer
 }
 
-func calcMulTimeBy2or3(num int) int {
-	var mulTime int
+func calcMulTimeBy2or3orAddN(num, x, n int) int {
+	var calcTime int
 	for num%2 == 0 {
 		num = num / 2
-		mulTime++
+		calcTime++
 	}
 
 	for num%3 == 0 {
 		num = num / 3
-		mulTime++
+		calcTime++
 	}
 
-	return mulTime
+	if num == x+n {
+		calcTime++
+	}
+
+	return calcTime
 }
