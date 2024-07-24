@@ -65,53 +65,17 @@ func TestSolution(t *testing.T) {
 
 func solution(x int, y int, n int) int {
 
-	//특이 케이스 처리하기
-	if x+n == y || x*2 == y || x*3 == y {
-		return 1
-	}
-
-	/*
-		x * (2, 3, 6의 배수) = y - (n을 더하는 횟수) * n
-		위 식을 만족하는 어떤수 + n을 더하는 횟수 최소값을 찾아야함.
-
-		그래프의 기울기를 사용.
-	*/
-
-	//초기 덧셈연산을 최대값으로 하고
-	var nAddTime int
-	var mulTime int
-
 	if (y-x)%n == 0 {
-		nAddTime = (y - x) / n
-	} else if (y-2*x)%n == 0 {
-		nAddTime = (y - 2*x) / n
-		mulTime = 1
-	} else if (y-3*x)%n == 0 {
-		nAddTime = (y - 3*x) / n
-		mulTime = 1
-	}
+		//x에 n만 여러 번 더해서 구할 수 있는 경우인듯.
+		//덧셈 횟수를 1씩 줄이고 곱셈 수를 늘려나가며 원하는 연산횟수를 찾는다.
+		var calcTime int 
+		maxAddTimes := (y - x) / n
+		calcTime = maxAddTimes //일단은 덧셈 횟수로 초기화
 
-	var answer = nAddTime + mulTime
-	if answer == 0 {
-		return -1
-	}
-
-	//nAddTime을 .. 1씩 줄여나가면서 절충점을 찾는다..?
-	for i := nAddTime - 1; i >= 0; i-- {
-		mul := (y - i*n) / x //mul은 2 또는 3의 배수인데, 2와 3을 몇번 곱해서 나오는 수인지 알아야 한다.
-
-		if (y-i*n)%x != 0 {
-			continue
-		}
-
-		mulTime = calcMulTimeBy2or3orAddN(mul, x, n) //여기도 잘못됨.
-		if mulTime == 0 {
-			continue
-		}
-
-		calcTime := i + mulTime
-		if answer > calcTime {
-			answer = calcTime
+		for i := maxAddTimes -1; i >= 0; i-- {
+			if (y - n * i) == x {
+				cTime := 
+			}
 		}
 	}
 
