@@ -1,25 +1,25 @@
-function solution(k, tangerine) {
-  let count = 0,
-    result = 0,
-    object = {};
+function solution(s) {
+  if (s.length % 2 === 1) {
+    return false;
+  }
 
-  tangerine.forEach((x, idx) => {
-    object[[x]] = tangerine.filter((element) => x === element).length;
-  });
+  let pstack = [];
+  for (const char of s) {
+    pstack.push(char);
 
-  let gulnum = Object.entries(object).sort(([, a], [, b]) => b - a);
-
-  gulnum.forEach((i, index) => {
-    let num = Number(gulnum[index][1]);
-    if (num >= k) {
-      result++;
-    } else if (count < k && k - count >= num) {
-      count = count + num;
-      result++;
+    if (pstack.length < 2) {
+      continue;
     }
-  });
 
-  return result;
+    const lastTwoChar = pstack.slice(pstack.length - 2, pstack.length);
+    if (lastTwoChar[0] === "(" && lastTwoChar[1] === ")") {
+      pstack = pstack.slice(0, pstack.length - 2);
+    }
+  }
+
+  console.log(pstack);
+
+  return pstack.length === 0;
 }
 
-console.log(solution(1, [1, 1]));
+console.log(solution("()()"));
