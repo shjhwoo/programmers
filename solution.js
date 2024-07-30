@@ -1,18 +1,4 @@
 function solution(s) {
-  /*
-  '(' 또는 ')' 로만 이루어진 문자열 
-  
-  빠르게 판단: 
-  길이가 홀수면 무조건 false
-  
-  짝수일 때가 문제겠네.
-  
-  스택을 어떻게 이용할까요? 
-  
-  ()()    
-  
-  */
-
   if (s.length % 2 === 1) {
     return false;
   }
@@ -52,4 +38,23 @@ function solution(s) {
     else answer.pop();
   }
   return answer.length ? false : true;
+}
+
+//스택 말고 메모리 더 줄여서.
+function solution2(s) {
+  let cnt = 0;
+  for (const c of s) {
+    if (c === ")") {
+      cnt++;
+    } else {
+      if (cnt === 0) {
+        //더 이상 빼줄 수 있는,
+        //즉 이전에 들어간 짝 ( 괄호가 없기 때문에 false를 리턴하는것이다.
+        return false;
+      }
+      cnt--;
+    }
+  }
+
+  return cnt === 0;
 }
