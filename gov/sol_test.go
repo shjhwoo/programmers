@@ -88,6 +88,7 @@ func solution(bridge_length int, maxWeight int, waiting_trucks []int) int {
 			3) 무게가 한도를 넘어가는 경우
 		*/
 
+		//4가지 조건문 == 경우로 나눠서 생각한것임.
 		newWeight := current_weight + newTruck
 		if len(bridge) < bridge_length {
 			if newWeight <= maxWeight { //1) 여유가 있어서 들어와도 되는 경우
@@ -119,3 +120,12 @@ func solution(bridge_length int, maxWeight int, waiting_trucks []int) int {
 
 	return answer
 }
+
+/*
+숙제..
+1초에 1칸씩 갈 수 있지만
+초 = 거리 이므로
+무게 제한에 걸렸을 때 차량들을 한번에 끝까지 보내버리고 그 전체 거리 시간 계산에 더해버리면 줄일 수 있음.
+
+1초씩 처리하고 시간 초과하면 튜닝하려고 했는데 그냥 통과해버려서 넘어가려다가 찝찝해서 튜닝
+*/
