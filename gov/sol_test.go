@@ -21,18 +21,18 @@ func TestSolution(t *testing.T) {
 			truck_weights: []int{7, 4, 5, 6},
 			expect:        8,
 		},
-		// {
-		// 	bridge_length: 100,
-		// 	weight:        100,
-		// 	truck_weights: []int{10},
-		// 	expect:        101,
-		// },
-		// {
-		// 	bridge_length: 100,
-		// 	weight:        100,
-		// 	truck_weights: []int{10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-		// 	expect:        110,
-		// },
+		{
+			bridge_length: 100,
+			weight:        100,
+			truck_weights: []int{10},
+			expect:        101,
+		},
+		{
+			bridge_length: 100,
+			weight:        100,
+			truck_weights: []int{10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+			expect:        110,
+		},
 	}
 
 	for _, test := range tests {
@@ -71,12 +71,14 @@ func solution(bridge_length int, maxWeight int, waiting_trucks []int) int {
 	var truckIdx = 1
 	for current_weight > 0 {
 
-		//마지막 처리를 어떻게 해야하지..ㅠㅠ
-		if truckIdx == len(waiting_trucks) {
-			if len(bridge) == 1 {
-				answer += bridge_length
-			}
-			break
+		var newTruck int
+
+		//이렇게 한다고 해도.. break는 걸리지 않아. 대신에 for 문의 조건에 걸려서 빠진다.
+		//왜냐하면 일단 시작한 이상은, 항상 최소 한대의 트럭이 다리 위에 있게 되는데,
+		//시작한 이후 다리 위에 있는 트럭 무게의 합이 0이라는 거는 이제 모든 트럭이 다 빠져나갔음을 의미.
+		// 최소 시간을 구하는거기 때문에 항상 바로바로 트럭이 들어오려고 하기때문이다.
+		if truckIdx < len(waiting_trucks) {
+			newTruck = waiting_trucks[truckIdx]
 		}
 
 		/*
@@ -86,9 +88,7 @@ func solution(bridge_length int, maxWeight int, waiting_trucks []int) int {
 			3) 무게가 한도를 넘어가는 경우
 		*/
 
-		newTruck := waiting_trucks[truckIdx]
 		newWeight := current_weight + newTruck
-
 		if len(bridge) < bridge_length {
 			if newWeight <= maxWeight { //1) 여유가 있어서 들어와도 되는 경우
 				bridge = append(bridge, newTruck)
@@ -99,15 +99,15 @@ func solution(bridge_length int, maxWeight int, waiting_trucks []int) int {
 				bridge = append(bridge, 0)
 			}
 		} else if len(bridge) == bridge_length {
-			if current_weight-bridge[0]+newTruck <= maxWeight {
-				firstTruck := bridge[0]
+
+			firstTruck := bridge[0]
+			if current_weight-firstTruck+newTruck <= maxWeight {
 				bridge = bridge[1:]
 				bridge = append(bridge, newTruck)
 				truckIdx++
 				current_weight = current_weight - firstTruck + newTruck
-			} else if current_weight-bridge[0]+newTruck > maxWeight {
+			} else if current_weight-firstTruck+newTruck > maxWeight {
 				//넣을 수 없다. 대신 공백으로 0을 채운다
-				firstTruck := bridge[0]
 				bridge = bridge[1:]
 				bridge = append(bridge, 0)
 				current_weight -= firstTruck
@@ -115,7 +115,6 @@ func solution(bridge_length int, maxWeight int, waiting_trucks []int) int {
 		}
 
 		answer++
-
 	}
 
 	return answer
