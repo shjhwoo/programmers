@@ -39,49 +39,32 @@ func TestSolution(t *testing.T) {
 }
 
 func solution(priorities []int, location int) int {
-	var locationMap = make(map[int]int)
+	var answer int = 0 //실행순서임.
 
-	for idx, _ := range priorities {
-		locationMap[idx] = idx + 1
+	var priLo [][]int
+	for idx, p := range priorities {
+		priLo = append(priLo, []int{p, idx})
 	}
 
-	var nonZeroCnt = len(priorities)
-	var cursor int
-
-	for nonZeroCnt > 0 && cursor < len(priorities) {
-		if isCusrorHighest(priorities) {
-			priorities[cursor] = 0
-			nonZeroCnt--
-		} else {
-
-			priorities = append(priorities[1:], priorities[0])
-
-			locationMap[cursor+1] = 1             //맨 앞으로 가기
-			locationMap[cursor] = len(priorities) //맨 뒤로 가기
-
-			var boundary = len(priorities)
-
-			//순서 떙기기..
-			var i int = 2
-			for {
-				locationMap[cursor+i] = locationMap[cursor+i-1] + 1 //어디까지??
-
-				i++
+	for len(priLo) > 0 {
+		if highest(priLo[0][0], priLo[1:]) {
+			outlo := priLo[0][1]
+			priLo = priLo[1:]
+			answer++
+			if outlo == location {
+				break
 			}
-
+		} else {
+			priLo = append(priLo[1:], priLo[0])
 		}
-
-		cursor++
 	}
 
-	return locationMap[location]
+	return answer
 }
 
-func isCusrorHighest(priorities []int) bool {
-	num := priorities[0]
-
-	for _, compareNum := range priorities[1:] {
-		if compareNum > num {
+func highest(process int, priLo [][]int) bool {
+	for _, item := range priLo {
+		if process < item[0] {
 			return false
 		}
 	}
