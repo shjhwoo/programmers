@@ -12,6 +12,7 @@ type TestCase struct {
 	expect     int
 }
 
+// 포인트는 인덱스를 같이 저장하는 것..!!
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		// {
