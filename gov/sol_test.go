@@ -7,68 +7,116 @@ import (
 )
 
 type TestCase struct {
-	priorities []int
-	location   int
-	expect     int
+	genres []string
+	plays  []int
+	expect []int
 }
 
 // 포인트는 인덱스를 같이 저장하는 것..!!
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
-		// {
-		// 	priorities: []int{2, 1, 3, 2},
-		// 	location:   2,
-		// 	expect:     1,
-		// },
-		// {
-		// 	priorities: []int{1, 1, 9, 1, 1, 1},
-		// 	location:   0,
-		// 	expect:     5,
-		// },
 		{
-			priorities: []int{1, 2, 3, 4, 5, 6}, //  5 1 2 3 4
-			location:   4,
-			expect:     2,
+			genres: []string{"classic", "pop", "classic", "classic", "pop"}, //  5 1 2 3 4
+			plays:  []int{500, 600, 150, 800, 2500},
+			expect: []int{4, 1, 3, 0},
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.priorities, test.location)
+		ans := solution(test.genres, test.plays)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(priorities []int, location int) int {
-	var answer int = 0 //실행순서임.
+/*
+장르 별로 가장 많이 재생된 노래를 두 개씩
 
-	var priLo [][]int
-	for idx, p := range priorities {
-		priLo = append(priLo, []int{p, idx})
+노래 = 고유번호 키
+
+속한 노래가 많이 재생된 장르를 먼저 수록합니다.
+장르 내에서 많이 재생된 노래를 먼저 수록합니다.
+장르 내에서 재생 횟수가 같은 노래 중에서는 고유 번호가 낮은 노래를 먼저
+*/
+
+type BestGenRe struct {
+	GenreName       string
+	SongIdxPlaysMap map[int]int
+}
+
+func solution(genres []string, plays []int) []int {
+
+	var genreMap = make(map[string]int)
+
+	for idx, genre := range genres {
+		genreMap[genre] += plays[idx]
 	}
 
-	for len(priLo) > 0 {
-		if highest(priLo[0][0], priLo[1:]) {
-			outlo := priLo[0][1]
-			priLo = priLo[1:]
-			answer++
-			if outlo == location {
-				break
+	var bestAlbum = make(map[int]BestGenRe)
+
+	var idx = 1
+	for len(bestAlbum) < 2 {
+		var maxPlay int
+		var maxGenre string
+		for genreK, playSum := range genreMap {
+			if maxPlay < playSum {
+				maxPlay = playSum
+				maxGenre = genreK
+
 			}
-		} else {
-			priLo = append(priLo[1:], priLo[0])
 		}
+
+		bestAlbum[idx] = BestGenRe{
+			GenreName: maxGenre,
+		}
+		delete(genreMap, maxGenre)
+		idx++
+	}
+
+	first := bestAlbum[1].GenreName
+	second := bestAlbum[2].GenreName
+	for idx, genre := range genres {
+		if genre == first {
+			if val, ok := bestAlbum[1]; ok {
+				if val.SongIdxPlaysMap == nil {
+					val.SongIdxPlaysMap = make(map[int]int)
+				}
+				val.SongIdxPlaysMap[idx] = plays[idx]
+				bestAlbum[1] = val
+			}
+		}
+
+		if genre == second {
+			if val, ok := bestAlbum[2]; ok {
+				if val.SongIdxPlaysMap == nil {
+					val.SongIdxPlaysMap = make(map[int]int)
+				}
+				val.SongIdxPlaysMap[idx] = plays[idx]
+				bestAlbum[2] = val
+			}
+		}
+	}
+
+	var answer []int
+	for i := 1; i < 3; i++ {
+		var top2 []int
+		for len(top2) < 2 {
+
+			var max int
+			var maxIdx int
+			for idx, play := range bestAlbum[i].SongIdxPlaysMap {
+				if max < play {
+					max = play
+					maxIdx = idx
+				}
+			}
+
+			top2 = append(top2, maxIdx)
+			delete(bestAlbum[i].SongIdxPlaysMap, maxIdx)
+		}
+
+		answer = append(answer, top2...)
 	}
 
 	return answer
-}
-
-func highest(process int, priLo [][]int) bool {
-	for _, item := range priLo {
-		if process < item[0] {
-			return false
-		}
-	}
-
-	return true
 }
