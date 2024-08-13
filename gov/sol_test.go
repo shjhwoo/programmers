@@ -16,9 +16,19 @@ type TestCase struct {
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			genres: []string{"classic", "pop", "classic", "classic", "pop"}, //  5 1 2 3 4
+			genres: []string{"classic", "pop", "classic", "classic", "pop"},
 			plays:  []int{500, 600, 150, 800, 2500},
 			expect: []int{4, 1, 3, 0},
+		},
+		{
+			genres: []string{"classic", "pop"},
+			plays:  []int{500, 600},
+			expect: []int{1, 0},
+		},
+		{
+			genres: []string{"classic", "pop", "classic", "classic", "classic"},
+			plays:  []int{500, 600, 500, 1900, 300},
+			expect: []int{3, 0, 1},
 		},
 	}
 
@@ -40,82 +50,84 @@ func TestSolution(t *testing.T) {
 */
 
 type BestGenRe struct {
-	GenreName       string
+	PlaySum         int
 	SongIdxPlaysMap map[int]int
 }
 
 func solution(genres []string, plays []int) []int {
 
-	var genreMap = make(map[string]int)
+	var genreMap = make(map[string]*BestGenRe)
 
 	for idx, genre := range genres {
-		genreMap[genre] += plays[idx]
+		if genreMap[genre] == nil {
+			genreMap[genre] = &BestGenRe{}
+		}
+		genreMap[genre].PlaySum += plays[idx]
+
+		if genreMap[genre].SongIdxPlaysMap == nil {
+			genreMap[genre].SongIdxPlaysMap = make(map[int]int)
+		}
+
+		genreMap[genre].SongIdxPlaysMap[idx] = plays[idx]
 	}
 
-	var bestAlbum = make(map[int]BestGenRe)
+	// fmt.Println(genreMap, "genreMap 확인중!")
 
-	var idx = 1
-	for len(bestAlbum) < 2 {
-		var maxPlay int
-		var maxGenre string
-		for genreK, playSum := range genreMap {
-			if maxPlay < playSum {
-				maxPlay = playSum
-				maxGenre = genreK
+	var i int
+	var top2GenreList = []*BestGenRe{}
 
+	for i < 2 {
+		var maxGenrePlayTime int
+		var topGenreName string
+		var topGenre *BestGenRe
+		for genreName, bestGenre := range genreMap {
+			if maxGenrePlayTime < bestGenre.PlaySum {
+				topGenreName = genreName
+				topGenre = bestGenre
+				maxGenrePlayTime = bestGenre.PlaySum
 			}
 		}
 
-		bestAlbum[idx] = BestGenRe{
-			GenreName: maxGenre,
+		if topGenre != nil {
+			top2GenreList = append(top2GenreList, topGenre)
+			delete(genreMap, topGenreName)
 		}
-		delete(genreMap, maxGenre)
-		idx++
+		i++
 	}
 
-	first := bestAlbum[1].GenreName
-	second := bestAlbum[2].GenreName
-	for idx, genre := range genres {
-		if genre == first {
-			if val, ok := bestAlbum[1]; ok {
-				if val.SongIdxPlaysMap == nil {
-					val.SongIdxPlaysMap = make(map[int]int)
-				}
-				val.SongIdxPlaysMap[idx] = plays[idx]
-				bestAlbum[1] = val
-			}
-		}
-
-		if genre == second {
-			if val, ok := bestAlbum[2]; ok {
-				if val.SongIdxPlaysMap == nil {
-					val.SongIdxPlaysMap = make(map[int]int)
-				}
-				val.SongIdxPlaysMap[idx] = plays[idx]
-				bestAlbum[2] = val
-			}
-		}
-	}
+	// fmt.Println(top2GenreList, "top2GenreList 확인중!")
 
 	var answer []int
-	for i := 1; i < 3; i++ {
-		var top2 []int
-		for len(top2) < 2 {
+	for _, bestGenre := range top2GenreList {
+		var i int
+		var listSum [][]int
+		for i < 2 {
+			var maxPlayTime int
+			var topSongIdx int
+			for songIdx, playTime := range bestGenre.SongIdxPlaysMap {
+				if maxPlayTime < playTime {
+					maxPlayTime = playTime
+					topSongIdx = songIdx
+				}
 
-			var max int
-			var maxIdx int
-			for idx, play := range bestAlbum[i].SongIdxPlaysMap {
-				if max < play {
-					max = play
-					maxIdx = idx
+				if maxPlayTime == playTime {
+					if topSongIdx > songIdx {
+						topSongIdx = songIdx
+					}
 				}
 			}
 
-			top2 = append(top2, maxIdx)
-			delete(bestAlbum[i].SongIdxPlaysMap, maxIdx)
+			if maxPlayTime > 0 {
+				delete(bestGenre.SongIdxPlaysMap, topSongIdx)
+				listSum = append(listSum, []int{topSongIdx, maxPlayTime})
+			}
+
+			i++
 		}
 
-		answer = append(answer, top2...)
+		for _, music := range listSum {
+			answer = append(answer, music[0])
+		}
 	}
 
 	return answer
