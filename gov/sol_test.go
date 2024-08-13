@@ -1,6 +1,8 @@
 package main_test
 
 import (
+	"fmt"
+	"sort"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -50,8 +52,14 @@ func TestSolution(t *testing.T) {
 */
 
 type BestGenRe struct {
+	GenreName       string
 	PlaySum         int
-	SongIdxPlaysMap map[int]int
+	SongIdxPlayList []*SongPlayTime
+}
+
+type SongPlayTime struct {
+	SongIdx int
+	Play    int
 }
 
 func solution(genres []string, plays []int) []int {
@@ -61,73 +69,51 @@ func solution(genres []string, plays []int) []int {
 	for idx, genre := range genres {
 		if genreMap[genre] == nil {
 			genreMap[genre] = &BestGenRe{}
+			genreMap[genre].GenreName = genre
 		}
 		genreMap[genre].PlaySum += plays[idx]
 
-		if genreMap[genre].SongIdxPlaysMap == nil {
-			genreMap[genre].SongIdxPlaysMap = make(map[int]int)
-		}
-
-		genreMap[genre].SongIdxPlaysMap[idx] = plays[idx]
+		genreMap[genre].SongIdxPlayList = append(genreMap[genre].SongIdxPlayList, &SongPlayTime{
+			SongIdx: idx,
+			Play:    plays[idx],
+		})
 	}
 
-	// fmt.Println(genreMap, "genreMap 확인중!")
+	fmt.Println(genreMap, "genreMap 확인중!")
 
-	var i int
-	var top2GenreList = []*BestGenRe{}
-
-	for i < 2 {
-		var maxGenrePlayTime int
-		var topGenreName string
-		var topGenre *BestGenRe
-		for genreName, bestGenre := range genreMap {
-			if maxGenrePlayTime < bestGenre.PlaySum {
-				topGenreName = genreName
-				topGenre = bestGenre
-				maxGenrePlayTime = bestGenre.PlaySum
-			}
-		}
-
-		if topGenre != nil {
-			top2GenreList = append(top2GenreList, topGenre)
-			delete(genreMap, topGenreName)
-		}
-		i++
+	var topGen []*BestGenRe
+	for _, Info := range genreMap {
+		topGen = append(topGen, Info)
 	}
 
-	// fmt.Println(top2GenreList, "top2GenreList 확인중!")
+	sort.Slice(topGen, func(i, j int) bool {
+		return topGen[i].PlaySum > topGen[j].PlaySum
+	})
+
+	if len(topGen) > 2 {
+		topGen = topGen[:2] //상위 2개만.
+	}
+
+	fmt.Println(topGen[0].GenreName, topGen[1].GenreName, "topGen")
 
 	var answer []int
-	for _, bestGenre := range top2GenreList {
-		var i int
-		var listSum [][]int
-		for i < 2 {
-			var maxPlayTime int
-			var topSongIdx int
-			for songIdx, playTime := range bestGenre.SongIdxPlaysMap {
-				if maxPlayTime < playTime {
-					maxPlayTime = playTime
-					topSongIdx = songIdx
-				}
-
-				if maxPlayTime == playTime {
-					if topSongIdx > songIdx {
-						topSongIdx = songIdx
-					}
-				}
+	for _, item := range topGen {
+		sort.Slice(item.SongIdxPlayList, func(i, j int) bool {
+			if item.SongIdxPlayList[i].Play != item.SongIdxPlayList[j].Play {
+				return item.SongIdxPlayList[i].Play > item.SongIdxPlayList[j].Play
 			}
 
-			if maxPlayTime > 0 {
-				delete(bestGenre.SongIdxPlaysMap, topSongIdx)
-				listSum = append(listSum, []int{topSongIdx, maxPlayTime})
-			}
+			return i < j
+		})
 
-			i++
+		if len(item.SongIdxPlayList) > 2 {
+			item.SongIdxPlayList = item.SongIdxPlayList[:2]
 		}
 
-		for _, music := range listSum {
-			answer = append(answer, music[0])
+		for _, item := range item.SongIdxPlayList {
+			answer = append(answer, item.SongIdx)
 		}
+
 	}
 
 	return answer
