@@ -1,60 +1,78 @@
-function solution(s) {
-  if (s.length % 2 === 1) {
-    return false;
+class MaxHeap {
+  constructor() {
+    this.heap = [null]; //0일때 예외처리를 하기 힘들어서, 일부러 최상위 노드는 null로 채운거구나..
   }
 
-  if (s[0] === ")" || s[s.length - 1] === "(") {
-    return false;
+  len() {
+    return this.heap.length;
   }
 
-  let pstack = [];
-  for (const char of s) {
-    if (pstack.length === 0 && char === ")") {
-      return false;
-    }
+  push(value) {
+    this.heap.push(value);
 
-    pstack.push(char);
+    let currentIdx = this.heap.length - 1;
+    let parentIdx = Math.floor(currentIdx / 2); //만약에 초기가 아얘 빈 배열이었으면 current가 바로 parent가 되어버리니 그 부분 처리하는 게 귀찮아 질 수 있겠구나.
 
-    if (pstack.length < 2) {
-      continue;
-    }
+    while (parentIdx > 0 && this.heap[parentIdx] < value) {
+      let temp = this.heap[parentIdx];
+      this.heap[parentIdx] = value;
+      this.heap[currentIdx] = temp;
 
-    const lastTwoChar = pstack.slice(pstack.length - 2, pstack.length);
-    if (lastTwoChar[0] === "(" && lastTwoChar[1] === ")") {
-      pstack = pstack.slice(0, pstack.length - 2);
+      currentIdx = parentIdx;
+      parentIdx = Math.floor(currentIdx / 2);
     }
   }
 
-  return pstack.length === 0;
-}
-console.log(solution("()()"));
+  pop() {
+    if (this.heap.length === 2) return this.heap.pop();
 
-//이게 더 좋다고 함.
-function solution(s) {
-  let answer = [];
-  for (i of s) {
-    if (i == "(") answer.push("(");
-    else if (answer.length == 0) return false; //중간에 즉시 리턴을 위함,
-    else answer.pop();
-  }
-  return answer.length ? false : true;
-}
+    const returnValue = this.heap[1];
+    this.heap[1] = this.heap.pop();
 
-//스택 말고 메모리 더 줄여서.
-function solution2(s) {
-  let cnt = 0;
-  for (const c of s) {
-    if (c === ")") {
-      cnt++;
-    } else {
-      if (cnt === 0) {
-        //더 이상 빼줄 수 있는,
-        //즉 이전에 들어간 짝 ( 괄호가 없기 때문에 false를 리턴하는것이다.
-        return false;
+    let currentIdx = 1;
+    let leftIdx = 2;
+    let rightIdx = 3;
+
+    while (
+      this.heap[currentIdx] < this.heap[leftIdx] ||
+      this.heap[currentIdx] < this.heap[rightIdx]
+    ) {
+      if (this.heap[leftIdx] < this.heap[rightIdx]) {
+        const temp = this.heap[currentIdx];
+        this.heap[currentIdx] = this.heap[rightIdx];
+        this.heap[rightIdx] = temp;
+        currentIdx = rightIdx;
+      } else {
+        const temp = this.heap[currentIdx];
+        this.heap[currentIdx] = this.heap[leftIdx];
+        this.heap[leftIdx] = temp;
+        currentIdx = leftIdx;
       }
-      cnt--;
+
+      leftIdx = currentIdx * 2;
+      rightIdx = currentIdx * 2 + 1;
     }
+
+    return returnValue;
+  }
+}
+
+function solution(no, works) {
+  if (works.reduce((a, b) => a + b) <= no) {
+    return 0;
   }
 
-  return cnt === 0;
+  const heap = new MaxHeap();
+  for (const work of works) {
+    heap.push(work);
+  }
+
+  while (heap.len() > 0 && no > 0) {
+    heap.push(heap.pop() - 1);
+    no--;
+  }
+
+  return heap.heap.reduce((a, b) => a + b * b);
 }
+
+console.log(solution(4, [4, 3, 3]));
