@@ -1,120 +1,115 @@
 package main_test
 
 import (
+	"container/heap"
 	"fmt"
-	"sort"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
 type TestCase struct {
-	genres []string
-	plays  []int
-	expect []int
+	no     int
+	works  []int
+	expect int
 }
 
 // 포인트는 인덱스를 같이 저장하는 것..!!
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			genres: []string{"classic", "pop", "classic", "classic", "pop"},
-			plays:  []int{500, 600, 150, 800, 2500},
-			expect: []int{4, 1, 3, 0},
+			no:     4,
+			works:  []int{4, 3, 3},
+			expect: 12,
 		},
 		{
-			genres: []string{"classic", "pop"},
-			plays:  []int{500, 600},
-			expect: []int{1, 0},
-		},
-		{
-			genres: []string{"classic", "pop", "classic", "classic", "classic"},
-			plays:  []int{500, 600, 500, 1900, 300},
-			expect: []int{3, 0, 1},
+			no:     2,
+			works:  []int{3, 3, 3},
+			expect: 17,
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.genres, test.plays)
+		ans := solution(test.no, test.works)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-/*
-장르 별로 가장 많이 재생된 노래를 두 개씩
+// 남은 일의 작업량을 숫자로 매기고 배상비용을 최소화
+// 배상 비용은 각 선박의 완성까지 남은 일의 작업량을 제곱하여 모두 더한 값이 됩니다.
+func solution(no int, works []int) int {
+	//일단 배열의 모든 인수가 다 최소화가 되어야 한다.
 
-노래 = 고유번호 키
+	//가장 간단히 하려면 빼는 경우의 수 모두 다 찾고, 각각 계산해서 최소값을 구함.
+	//그러면 일단은 어찌 되었든 간에 works 배열을 최대 힙으로 정렬하고,
+	// 가장 상위의 원소에서 무조건 1을 뺀 다음에, 그 다음으로 최대값이 되는 원소를 찾아
+	// 루트로 올리는 정렬을 한다.
+	// 이런 과정을 반복하면 최소값을 구할 수 있다.
+	// 최대가 되는 숫자들을 어찌되었든 간에 최소로 하려는 것이다.
 
-속한 노래가 많이 재생된 장르를 먼저 수록합니다.
-장르 내에서 많이 재생된 노래를 먼저 수록합니다.
-장르 내에서 재생 횟수가 같은 노래 중에서는 고유 번호가 낮은 노래를 먼저
-*/
-
-type BestGenRe struct {
-	GenreName       string
-	PlaySum         int
-	SongIdxPlayList []*SongPlayTime
-}
-
-type SongPlayTime struct {
-	SongIdx int
-	Play    int
-}
-
-func solution(genres []string, plays []int) []int {
-
-	var genreMap = make(map[string]*BestGenRe)
-
-	for idx, genre := range genres {
-		if genreMap[genre] == nil {
-			genreMap[genre] = &BestGenRe{}
-			genreMap[genre].GenreName = genre
-		}
-		genreMap[genre].PlaySum += plays[idx]
-
-		genreMap[genre].SongIdxPlayList = append(genreMap[genre].SongIdxPlayList, &SongPlayTime{
-			SongIdx: idx,
-			Play:    plays[idx],
-		})
+	worksHeap := &IntHeap{}
+	for _, work := range works {
+		worksHeap.Push(work)
 	}
 
-	fmt.Println(genreMap, "genreMap 확인중!")
+	heap.Init(worksHeap)
 
-	var topGen []*BestGenRe
-	for _, Info := range genreMap {
-		topGen = append(topGen, Info)
+	for no > 0 {
+		longestWork := worksHeap.Pop().(int)
+		longestWork--
+
+		//다시 힙에 넣어준다.. 정렬은 알아서 함.
+		worksHeap.Push(longestWork)
+
+		//뺀다.
+		no--
 	}
 
-	sort.Slice(topGen, func(i, j int) bool {
-		return topGen[i].PlaySum > topGen[j].PlaySum
-	})
+	fmt.Println(*worksHeap)
 
-	if len(topGen) > 2 {
-		topGen = topGen[:2] //상위 2개만.
-	}
+	var answer int
+	for worksHeap.Len() > 0 {
+		elem := worksHeap.Pop().(int)
 
-	fmt.Println(topGen[0].GenreName, topGen[1].GenreName, "topGen")
-
-	var answer []int
-	for _, item := range topGen {
-		sort.Slice(item.SongIdxPlayList, func(i, j int) bool {
-			if item.SongIdxPlayList[i].Play != item.SongIdxPlayList[j].Play {
-				return item.SongIdxPlayList[i].Play > item.SongIdxPlayList[j].Play
-			}
-
-			return i < j
-		})
-
-		if len(item.SongIdxPlayList) > 2 {
-			item.SongIdxPlayList = item.SongIdxPlayList[:2]
-		}
-
-		for _, item := range item.SongIdxPlayList {
-			answer = append(answer, item.SongIdx)
-		}
-
+		answer += elem * elem
 	}
 
 	return answer
+}
+
+type IntHeap []int
+
+func (h IntHeap) Len() int {
+	return len(h)
+}
+
+func (h IntHeap) Less(i, j int) bool {
+	return h[i] > h[j]
+}
+
+func (h IntHeap) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+}
+
+func (h *IntHeap) Push(elem any) {
+	*h = append(*h, elem.(int))
+}
+
+func (h *IntHeap) Pop() any {
+	copy := *h //슬라이스는 배열의 주소값이기 때문에 메서드 정의 시 포인터로 정의하지 않으면 원본이 훼손됨
+	result := copy[0]
+	*h = copy[1:]
+
+	return result
+}
+
+func TestHeap(t *testing.T) {
+	h := &IntHeap{2, 1, 7}
+
+	heap.Init(h)
+	fmt.Println(*h)
+
+	heap.Push(h, 4)
+	assert.DeepEqual(t, IntHeap{1, 2, 7, 4}, *h)
 }
