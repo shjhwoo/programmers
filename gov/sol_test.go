@@ -1,116 +1,117 @@
 package main_test
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	"math"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
-type TestCase struct {
-	words  []string
-	expect int
+func FuzzSolution(f *testing.F) {
+	// Seed corpus with example values
+	// Since []int is not allowed, we use []byte and convert it to []int in the fuzz function
+	f.Add(6, []byte{7, 10}) // Corresponds to n=6 and times=[7,10]
+
+	f.Fuzz(func(t *testing.T, n int, timesBytes []byte) {
+		// Convert []byte to []int
+		times := make([]int, len(timesBytes))
+		for i, b := range timesBytes {
+			times[i] = int(b)
+		}
+
+		// Validate inputs
+		if n < 0 {
+			t.Skip() // Skip invalid test case
+		}
+		if len(times) == 0 {
+			t.Skip() // Skip test case with empty times slice
+		}
+		for _, time := range times {
+			if time <= 0 {
+				t.Skip() // Skip invalid times
+			}
+		}
+
+		// Call the solution function
+		res := solution(n, times)
+
+		// Optionally, you can perform assertions if you have expected behavior
+		// For example, ensuring the result is non-negative
+		if res < 0 {
+			t.Errorf("Expected non-negative result, got %d", res)
+		}
+
+		// Log the result for debugging purposes
+		t.Logf("n: %d, times: %v, result: %d", n, times, res)
+	})
 }
 
-// 포인트는 인덱스를 같이 저장하는 것..!!
+type TestCase struct {
+	n      int
+	times  []int
+	expect int64
+}
+
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
 		{
-			words:  []string{"go", "gone", "guild"},
-			expect: 7,
+			n:      6,
+			times:  []int{7, 10},
+			expect: 28,
 		},
 		{
-			words:  []string{"abc", "def", "ghi", "jklm"},
-			expect: 4,
-		},
-		{
-			words:  []string{"word", "war", "warrior", "world"},
-			expect: 15,
+			n:      6,
+			times:  []int{7},
+			expect: 42,
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.words)
+		ans := solution(test.n, test.times)
 		t.Log(ans, "계산값")
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-func solution(words []string) int {
-	trie := TrieNode{}
-	for _, word := range words {
-		trie.Insert(word)
-	}
+// 결정문제 => parametric search.
+func solution(n int, times []int) int64 {
 
-	b, _ := json.MarshalIndent(trie, "", "	")
-	fmt.Println(string(b), "만든 trie 확인하기")
+	shortestExamTime := getShortestExamTime(times)
 
-	var answer int
-	for _, word := range words {
-		charSlice := strings.Split(word, "")
-		curNode := trie
-		var cnt int
-		for _, char := range charSlice {
-			if nextNode, ok := curNode.NextMap[char]; ok {
-				cnt++
-				curNode = *nextNode
-				if curNode.Count == 1 {
-					break
-				}
-			}
-		}
+	var start = int64(1)
+	var end = int64(shortestExamTime * n)
 
-		answer += cnt
-	}
+	for start <= end {
+		var mid = int64(math.Round(float64((start + end) / 2)))
 
-	return answer
-}
-
-type TrieNode struct {
-	Value   string
-	Count   int
-	NextMap map[string]*TrieNode
-}
-
-func (tn *TrieNode) Insert(word string) {
-	currentNode := tn
-	charList := strings.Split(word, "")
-
-	for _, char := range charList {
-
-		if currentNode.NextMap == nil {
-			currentNode.NextMap = make(map[string]*TrieNode)
-		}
-
-		foundNode, ok := currentNode.NextMap[char]
-		if !ok {
-			//이때만 넣어준다..
-			currentNode.NextMap[char] = &TrieNode{
-				Value:   currentNode.Value + char,
-				Count:   1,
-				NextMap: make(map[string]*TrieNode),
-			}
+		if ableToFinishExamIn(n, mid, times) {
+			//더 최소값을 찾을 수 있을지.. (주어진 시간 내에 주어진 인원을 다 심사가능하단 소리)
+			end = mid - 1
 		} else {
-			foundNode.Count++
+			//주어진 시간 내 n명 모두 다 보기는 힘드니까 시간을 늘려달라.
+			start = mid + 1
 		}
-
-		currentNode = currentNode.NextMap[char]
 	}
+
+	return int64(end)
 }
 
-func (tn *TrieNode) Has(word string) bool {
-	currentNode := tn
-	charList := strings.Split(word, "")
-
-	for _, char := range charList {
-		if _, ok := currentNode.NextMap[char]; !ok {
-			return false
+func getShortestExamTime(times []int) int {
+	var result = times[0]
+	for _, time := range times[1:] {
+		if result > time {
+			result = time
 		}
-
-		currentNode = currentNode.NextMap[char]
 	}
 
-	return true
+	return result
+}
+
+func ableToFinishExamIn(n int, examTime int64, times []int) bool {
+	var examCnt int64
+	for _, time := range times {
+		examCnt += examTime / int64(time)
+	}
+
+	return int64(n) <= examCnt
 }
