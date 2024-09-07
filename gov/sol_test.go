@@ -127,3 +127,65 @@ func InsertSort(numbers []int) []int {
 
 	return numbers
 }
+
+func TestMergeSort(t *testing.T) {
+	var tests = []TestCase{
+		{
+			numbers: []int{7, 4, 5, 1, 3, 6, 11, 9, 20, 10},
+			expect:  []int{1, 3, 4, 5, 6, 7, 9, 10, 11, 20},
+		},
+	}
+
+	for _, test := range tests {
+		ans := MergeSort(test.numbers)
+		t.Log(ans, "계산값")
+		assert.DeepEqual(t, test.expect, ans)
+	}
+}
+
+// MergeSort recursively sorts a slice of integers using merge sort algorithm
+func MergeSort(arr []int) []int {
+	// Base case: if the slice has 1 or 0 elements, it's already sorted
+	if len(arr) <= 1 {
+		return arr
+	}
+
+	// Find the middle index
+	mid := len(arr) / 2
+
+	//호출 스택 때문에 합쳐진걸 다시 나눌 일은 없음.
+	//합쳐진 결과값은 아래 머지 함수에서만 쓰임
+
+	// Recursively sort both halves
+	left := MergeSort(arr[:mid])
+	right := MergeSort(arr[mid:])
+
+	// Merge the sorted halves
+	return merge(left, right)
+}
+
+// merge merges two sorted slices into a single sorted slice
+func merge(left, right []int) []int {
+	// Create a result slice to store the merged values
+	result := []int{}
+
+	// Indices for left and right slices
+	i, j := 0, 0
+
+	// Merge while there are elements in both slices
+	for i < len(left) && j < len(right) {
+		if left[i] < right[j] {
+			result = append(result, left[i])
+			i++
+		} else {
+			result = append(result, right[j])
+			j++
+		}
+	}
+
+	// Append any remaining elements from the left or right slice (이미 정렬이 되어 있음.. 그리고 나뉘어져 있더라도 길이 차이가 1 차이이거나 길이가 같음.)
+	result = append(result, left[i:]...)
+	result = append(result, right[j:]...)
+
+	return result
+}
