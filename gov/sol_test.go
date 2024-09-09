@@ -1,7 +1,9 @@
 package main_test
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"gotest.tools/v3/assert"
 )
@@ -188,4 +190,145 @@ func merge(left, right []int) []int {
 	result = append(result, right[j:]...)
 
 	return result
+}
+
+func TestQuickSort(t *testing.T) {
+	var tests = []TestCase{
+		{
+			numbers: []int{7, 4, 5, 1, 3, 6, 11, 9, 20, 10},
+			expect:  []int{1, 3, 4, 5, 6, 7, 9, 10, 11, 20},
+		},
+	}
+
+	for _, test := range tests {
+		ans := QuickSort(test.numbers)
+		t.Log(ans, "계산값")
+		assert.DeepEqual(t, test.expect, ans)
+	}
+}
+
+func QuickSort(arr []int) []int {
+	if len(arr) <= 1 {
+		return arr
+	}
+
+	pivotIdx := len(arr) / 2
+
+	left, right := getLeftAndRight(pivotIdx, arr)
+
+	newLeft := QuickSort(left)
+	newRight := QuickSort(right)
+
+	return append(append(newLeft, arr[pivotIdx]), newRight...)
+}
+
+/*
+매번 퀵 정렬이 호출될 때마다 고르는 피벗의 위치가 달라진다면?
+
+원래 알고리즘에서는
+1번째 호출에서 i번째를 피벗으로 고르고,
+2번째 호출에서 i번째를 피벗으로 고르고,
+3번째 호출에서도 i번째를 피벗으로 고른다.
+
+하지만 만약 '난수'를 생성해 피벗을 고른다면
+
+1번째 호출에서는 i번째를 피벗으로 고르고,
+2번째 호출에서는 j번째를 피벗으로 고르고,
+3번째 호출에서는 k번째를 피벗으로 고르게 된다!
+
+만약 최악의 순서인 배열이 들어온다고 가정해보자.
+그래도 난수를 사용하면 피벗을 고르는 위치가 계속 바뀐다.
+피벗으로 고른 모든 숫자가 최대/최소값일 확률은 0에 수렴하게 된다.
+
+최악의 인풋이 들어와도
+우리는 평균적인 경우의 성능을 얻을 수 있다.
+
+n개의 범위에서 난수를 생성할 때는 O(n)의 연산이 더 들어간다.
+하지만 파티셔닝도 O(n)이기 때문에 전체 복잡도는 바뀌지 않는다.
+
+난수를 생성해서 피벗을 고른다 해도 여전히 최악의 경우가 없어진 것은 아니다.
+하지만 어떤 인풋이 들어와도 O(n^2) 연산을 하게 될 가능성은 0에 수렴한다.
+
+마음놓고 퀵 정렬의 성능을 즐길 수 있게 된 것이다!
+
+랜덤으로 알고리즘을 더 좋게 개선한 우아한 사례다.
+*/
+func BetterQuickSort(arr []int) []int {
+	if len(arr) <= 1 {
+		return arr
+	}
+
+	pivotIdx := getRandomIdx(len(arr))
+
+	left, right := getLeftAndRight(pivotIdx, arr)
+
+	newLeft := QuickSort(left)
+	newRight := QuickSort(right)
+
+	return append(append(newLeft, arr[pivotIdx]), newRight...)
+}
+
+func getRandomIdx(arrlen int) int {
+	rand.NewSource(time.Now().UnixNano())
+
+	return rand.Intn(arrlen)
+}
+
+func getLeftAndRight(pivotIdx int, arr []int) ([]int, []int) {
+	left := []int{}
+	right := []int{}
+	for idx, num := range arr {
+		if idx == pivotIdx {
+			continue
+		}
+
+		if num <= arr[pivotIdx] {
+			left = append(left, num)
+		} else {
+			right = append(right, num)
+		}
+	}
+
+	return left, right
+}
+
+/*
+goos: windows
+goarch: amd64
+pkg: sol
+cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+=== RUN   BenchmarkQuickSort
+BenchmarkQuickSort
+BenchmarkQuickSort-8
+
+	884589              1142 ns/op             976 B/op         39 allocs/op
+
+PASS
+ok      sol     1.817s
+*/
+func BenchmarkQuickSort(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		QuickSort([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
+	}
+}
+
+/*
+실제 벤치마크에서도 더 뛰어난 성능을 보인다.
+goos: windows
+goarch: amd64
+pkg: sol
+cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+=== RUN   BenchmarkBetterQuickSort
+BenchmarkBetterQuickSort
+BenchmarkBetterQuickSort-8
+
+	122595              8777 ns/op            1109 B/op         40 allocs/op
+
+PASS
+ok      sol     1.552s
+*/
+func BenchmarkBetterQuickSort(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		BetterQuickSort([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
+	}
 }
