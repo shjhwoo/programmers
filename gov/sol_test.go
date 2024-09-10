@@ -8,8 +8,112 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-//여러가지 정렬 알고리즘을 GO로 구현해보자
+//BFS, DFS 가장 먼 노드 실습하기
 
+type GraphTestCase struct {
+	n      int
+	vertex [][]int
+	expect int
+}
+
+func TestSolution(t *testing.T) {
+	var tests = []GraphTestCase{
+		{
+			n:      6,
+			vertex: [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}},
+			expect: 3,
+		},
+	}
+
+	for _, test := range tests {
+		ans := solution(test.n, test.vertex)
+		assert.DeepEqual(t, test.expect, ans)
+	}
+}
+
+func solution(n int, edge [][]int) int {
+	graph := buildGraph(n, edge)
+	distanceFromFirstMap := make(map[int]int)
+	for i := 2; i < n+1; i++ {
+		distance := getDistanceFrom1st(i, graph)
+		distanceFromFirstMap[i] = distance
+	}
+
+	var maxDist int
+	for _, distance := range distanceFromFirstMap {
+		if maxDist < distance {
+			maxDist = distance
+		}
+	}
+
+	var cnt int
+	for _, distance := range distanceFromFirstMap {
+		if distance == maxDist {
+			cnt++
+		}
+	}
+
+	return cnt
+}
+
+// 2차원 그래프를 만들어 줘야 한다.
+func buildGraph(n int, edge [][]int) [][]int {
+	var result [][]int
+	for i := 0; i < n; i++ {
+		row := []int{}
+		for j := 0; j < n; j++ {
+			row = append(row, 0)
+		}
+		result = append(result, row)
+	}
+
+	for _, rel := range edge {
+		row := rel[0] - 1
+		col := rel[1] - 1
+
+		result[row][col] = 1
+		result[col][row] = 1 //양방향 이므로.
+	}
+
+	return result
+}
+
+func getDistanceFrom1st(node int, graph [][]int) int {
+	//BFS
+	var queue []int
+	queue = append(queue, 1) //일단 넣는다
+	isVisited := map[int]bool{
+		1: true,
+	}
+
+	var edges int
+
+	for len(queue) > 0 { //큐에 뭐가 있는 동안은 반복을 해야 한다.
+		firstNode := queue[0]
+		queue = queue[1:]
+
+		//이 정점에서 갈 수 있는 이웃한 정점을 구해서 싹 다 큐에 넣는다
+		for i, row := range graph {
+			for j, col := range row {
+				if i+1 == firstNode && col == 1 && !isVisited[j+1] {
+					//j 정점을 방문한 것으로 간주.
+					isVisited[j+1] = true
+					queue = append(queue, j+1)
+					//여기서더하면안됨,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,edges++
+
+					//만약에 방문한 정점이 목표로 하는 정점노드라면..
+					if j+1 == node {
+						return edges
+					}
+				}
+			}
+		}
+	}
+
+	return edges
+}
+
+// 여러가지 정렬 알고리즘을 GO로 구현해보자
 type TestCase struct {
 	numbers []int
 	expect  []int
@@ -31,7 +135,6 @@ func TestBubbleSort(t *testing.T) {
 }
 
 func BubbleSort(numbers []int) []int {
-
 	for i := 0; i < len(numbers)-1; i++ { //총 배열의 길이 - 1만큼 반복
 		for j := 0; j < len(numbers)-1-i; j++ {
 			left := numbers[j]
