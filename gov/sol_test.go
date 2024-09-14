@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -32,63 +31,73 @@ func TestSolution(t *testing.T) {
 	}
 }
 
+// 1. 나 스스로
 func solution(n int, edge [][]int) int {
+	//일단 그래프를 만들어야 한다
 	graph := buildGraph(n, edge)
+	//fmt.Println(graph)
 
-	distance := []int{}
+	var destinations []int
 	for i := 0; i < n+1; i++ {
-		distance = append(distance, 0)
+		destinations = append(destinations, 0) //n=6인경우 [0,0,0,0,0,0,0]
 	}
 
-	var q = []int{1}
+	destinations[1] = 1 //방문했다고 표시해주는거임!! ****때문에~!
 
-	for len(q) > 0 {
-		first := q[0]
-		q = q[1:]
+	queue := []int{1}
 
-		for _, dest := range graph[first] {
-			if distance[dest] == 0 {
-				q = append(q, dest)
-				distance[dest] = distance[first] + 1
+	for len(queue) > 0 {
+		src := queue[0]
+		queue = queue[1:]
+
+		//그러면 src에서 갈 수 있는 모든 접점을 찾아본다
+		for idx, hasRoute := range graph[src] {
+			if destinations[idx] == 0 { //일종의 방문안했다는 표시... ****
+				if hasRoute {
+					queue = append(queue, idx) //넣는다
+					destinations[idx] = destinations[src] + 1
+				}
 			}
 		}
 	}
 
-	var max int
-	for _, dist := range distance {
-		if dist > max {
-			max = dist
+	var mx int
+	for _, v := range destinations {
+		if mx < v {
+			mx = v
 		}
 	}
 
-	fmt.Println("dist: ", distance)
-
-	var res []int
-	for _, dist := range distance {
-		if dist == max {
-			res = append(res, dist)
+	var ans int
+	for _, v := range destinations {
+		if v == mx {
+			ans++
 		}
 	}
 
-	return len(res)
+	return ans
 }
 
-// 2차원 그래프를 만들어 줘야 한다.
-func buildGraph(n int, edge [][]int) [][]int {
-	var result [][]int
+func buildGraph(n int, edge [][]int) [][]bool {
+	var graph [][]bool
 	for i := 0; i < n+1; i++ {
-		result = append(result, []int{})
+		var row []bool
+		for j := 0; j < n+1; j++ {
+			row = append(row, false)
+		}
+
+		graph = append(graph, row)
 	}
 
-	for _, rel := range edge {
-		src := rel[0]
-		dest := rel[1]
+	for _, e := range edge {
+		row := e[0]
+		col := e[1]
 
-		result[src] = append(result[src], dest)
-		result[dest] = append(result[dest], src) //양방향 이므로.
+		graph[row][col] = true
+		graph[col][row] = true
 	}
 
-	return result
+	return graph
 }
 
 // 여러가지 정렬 알고리즘을 GO로 구현해보자
