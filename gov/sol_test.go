@@ -100,6 +100,132 @@ func buildGraph(n int, edge [][]int) [][]bool {
 	return graph
 }
 
+func TestSolutionWithQueue(t *testing.T) {
+	var tests = []GraphTestCase{
+		{
+			n:      6,
+			vertex: [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}},
+			expect: 3,
+		},
+	}
+
+	for _, test := range tests {
+		ans := solutionWithQueue(test.n, test.vertex)
+		assert.DeepEqual(t, test.expect, ans)
+	}
+}
+
+// 큐를 직접 구현해서
+func solutionWithQueue(n int, edge [][]int) int {
+	//일단 그래프를 만들어야 한다
+	graph := buildGraph(n, edge)
+	//fmt.Println(graph)
+
+	var destinations []int
+	for i := 0; i < n+1; i++ {
+		destinations = append(destinations, 0) //n=6인경우 [0,0,0,0,0,0,0]
+	}
+
+	destinations[1] = 1 //방문했다고 표시해주는거임!! ****때문에~!
+
+	queue := NewQueue()
+	queue.EnQueue(1)
+
+	for !queue.IsEmpty() {
+		src := queue.DeQueue()
+
+		//그러면 src에서 갈 수 있는 모든 접점을 찾아본다
+		for idx, hasRoute := range graph[src] {
+			if destinations[idx] == 0 { //일종의 방문안했다는 표시... ****
+				if hasRoute {
+					queue.EnQueue(idx) //넣는다
+					destinations[idx] = destinations[src] + 1
+				}
+			}
+		}
+	}
+
+	var mx int
+	for _, v := range destinations {
+		if mx < v {
+			mx = v
+		}
+	}
+
+	var ans int
+	for _, v := range destinations {
+		if v == mx {
+			ans++
+		}
+	}
+
+	return ans
+}
+
+type Queue struct {
+	Q     []int
+	Front int
+	Rear  int
+}
+
+func NewQueue() *Queue {
+	return &Queue{}
+}
+
+func (q *Queue) EnQueue(value int) {
+	q.Q = append(q.Q, value)
+	q.Rear++
+}
+
+func (q *Queue) DeQueue() int {
+	val := q.Q[q.Front]
+	q.Front++
+	return val
+}
+
+func (q *Queue) IsEmpty() bool {
+	return q.Front == q.Rear
+}
+
+// Running tool: C:\Program Files\Go\bin\go.exe test -benchmem -run=^$ -bench ^BenchmarkSolutionWithQueue$ sol
+
+// goos: windows
+// goarch: amd64
+// pkg: sol
+// cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+// === RUN   BenchmarkSolutionWithQueue
+// BenchmarkSolutionWithQueue
+// BenchmarkSolutionWithQueue-8
+//  1465453               802.0 ns/op           656 B/op         19 allocs/op
+// PASS
+// ok      sol     2.739s
+
+func BenchmarkSolutionWithQueue(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		solutionWithQueue(6, [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}})
+	}
+}
+
+// Running tool: C:\Program Files\Go\bin\go.exe test -benchmem -run=^$ -bench ^BenchmarkSolution$ sol
+
+// goos: windows
+// goarch: amd64
+// pkg: sol
+// cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+// === RUN   BenchmarkSolution
+// BenchmarkSolution
+// BenchmarkSolution-8
+//
+//	1468044               774.5 ns/op           608 B/op         19 allocs/op
+//
+// PASS
+// ok      sol     2.307s
+func BenchmarkSolution(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		solution(6, [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}})
+	}
+}
+
 // 여러가지 정렬 알고리즘을 GO로 구현해보자
 type TestCase struct {
 	numbers []int
