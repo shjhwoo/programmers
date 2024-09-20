@@ -8,8 +8,73 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-//BFS, DFS 가장 먼 노드 실습하기
+type DFSGraphTestCase struct {
+	n      int
+	vertex [][]int
+	expect []string
+}
 
+func TestDFSSolution(t *testing.T) {
+	var tests = []DFSGraphTestCase{
+		{
+			n:      7,
+			vertex: [][]int{{1, 2}, {1, 4}, {2, 6}, {4, 5}, {6, 3}, {6, 7}},
+			expect: []string{"A", "B", "F", "C", "G", "D", "E"},
+		},
+	}
+
+	for _, test := range tests {
+		ans := dfsSolution(test.n, test.vertex)
+		assert.DeepEqual(t, test.expect, ans)
+	}
+}
+
+var alpDict = map[int]string{
+	1: "A",
+	2: "B",
+	3: "C",
+	4: "D",
+	5: "E",
+	6: "F",
+	7: "G",
+}
+
+// 정점 방문 이력을 출력하는 함수로..
+func dfsSolution(n int, edge [][]int) []string {
+	graph := buildGraph(n, edge)
+	stack := []int{1} // A정점부터 출발
+	var answer = []string{"A"}
+
+	var visitedMap = map[int]bool{
+		1: true,
+	}
+
+	for len(stack) > 0 {
+		//스택에서 팝 한다.
+		srcIdx := stack[len(stack)-1]
+
+		var found bool
+
+		//빼낸 정점에서 갈 수 있는 정점들 중 임의의 정점을 고른다.
+		for dstIdx, hasRoute := range graph[srcIdx] {
+			if !visitedMap[dstIdx] && hasRoute {
+				stack = append(stack, dstIdx)
+				answer = append(answer, alpDict[dstIdx])
+				visitedMap[dstIdx] = true
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			stack = stack[:len(stack)-1]
+		}
+	}
+
+	return answer
+}
+
+// BFS, DFS 가장 먼 노드 실습하기
 type GraphTestCase struct {
 	n      int
 	vertex [][]int
