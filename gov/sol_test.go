@@ -1,615 +1,106 @@
 package main_test
 
 import (
-	"math/rand"
+	"sort"
+	"strconv"
+	"strings"
 	"testing"
-	"time"
 
 	"gotest.tools/v3/assert"
 )
 
 type DFSGraphTestCase struct {
-	n      int
-	vertex [][]int
-	expect []string
+	number string
+	k      int //제거할 수!
+	expect string
 }
 
-func TestDFSSolution(t *testing.T) {
+func TestSolution(t *testing.T) {
 	var tests = []DFSGraphTestCase{
 		{
-			n:      7,
-			vertex: [][]int{{1, 2}, {1, 4}, {2, 6}, {4, 5}, {6, 3}, {6, 7}},
-			expect: []string{"A", "B", "F", "C", "G", "D", "E"},
+			number: "1924",
+			k:      2,
+			expect: "94",
+		},
+		{
+			number: "1231234",
+			k:      3,
+			expect: "3234",
+		},
+		{
+			number: "4177252841",
+			k:      4,
+			expect: "775841",
 		},
 	}
 
 	for _, test := range tests {
-		ans := dfsSolution(test.n, test.vertex)
+		ans := solution(test.number, test.k)
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-var alpDict = map[int]string{
-	1: "A",
-	2: "B",
-	3: "C",
-	4: "D",
-	5: "E",
-	6: "F",
-	7: "G",
-}
+func solution(number string, k int) string {
 
-// 정점 방문 이력을 출력하는 함수로..
-func dfsSolution(n int, edge [][]int) []string {
-	graph := buildGraph(n, edge)
-	stack := []int{1} // A정점부터 출발
-	var answer = []string{"A"}
+	/*
+		제거를 하면 몇자리 숫자가 되는지를 파악해야 한다?
+		음 일단은 앞쪽에 있는 숫자가 최대한 크도록 제거해나가야한다.
 
-	var visitedMap = map[int]bool{
-		1: true,
-	}
+		제일 작은 숫자들을 빼내야 한다.
 
-	for len(stack) > 0 {
-		//스택에서 팝 한다.
-		srcIdx := stack[len(stack)-1]
+		제일 작은 숫자 같은게 여러 개 있으면 그 중 제일 앞에 있는 숫자를 제거한다.
 
-		var found bool
+		그러면 일단은 숫자 메타정보 맵을 만들어보자.
 
-		//빼낸 정점에서 갈 수 있는 정점들 중 임의의 정점을 고른다.
-		for dstIdx, hasRoute := range graph[srcIdx] {
-			if !visitedMap[dstIdx] && hasRoute {
-				stack = append(stack, dstIdx)
-				answer = append(answer, alpDict[dstIdx])
-				visitedMap[dstIdx] = true
-				found = true
-				break
-			}
-		}
+		해당 숫자: 해당 숫자가 어느어느 인덱스에 있는지를 알려주기. map[int][]int
 
-		if !found {
-			stack = stack[:len(stack)-1]
+		조심해야하는경우... 예) 10009170 에서 숫자 3개만 빼라고 했을때 앞의 숫자 0을 빼면 19170, 뒤의 숫자 0을 빼면 10917
+	*/
+
+	idxToRmMap := buildNumberMeta(number, k)
+
+	var answer string
+	var splitted = strings.Split(number, "")
+	for idx, numCh := range splitted {
+		//제거조건에 안 맞으면은 answer에 가져다붙인다
+		if _, needRm := idxToRmMap[idx]; !needRm {
+			answer = answer + numCh
 		}
 	}
 
 	return answer
 }
 
-// BFS, DFS 가장 먼 노드 실습하기
-type GraphTestCase struct {
-	n      int
-	vertex [][]int
-	expect int
-}
+func buildNumberMeta(number string, k int) map[int]bool {
 
-func TestSolution(t *testing.T) {
-	var tests = []GraphTestCase{
-		{
-			n:      6,
-			vertex: [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}},
-			expect: 3,
-		},
+	var foundNums []int
+
+	var resMap = make(map[int][]int)
+	for idx, numCh := range strings.Split(number, "") {
+		n, _ := strconv.Atoi(numCh)
+
+		foundNums = append(foundNums, n)
+
+		resMap[n] = append(resMap[n], idx) //인덱스 순서대로 붙을거야..
 	}
 
-	for _, test := range tests {
-		ans := solution(test.n, test.vertex)
-		assert.DeepEqual(t, test.expect, ans)
-	}
-}
+	sort.Ints(foundNums)
 
-// 1. 나 스스로
-func solution(n int, edge [][]int) int {
-	//일단 그래프를 만들어야 한다
-	graph := buildGraph(n, edge)
-	//fmt.Println(graph)
+	//위 결과값을 인덱스 순서대로 정렬
+	var res = make(map[int]bool)
+	for _, nkey := range foundNums {
 
-	var destinations []int
-	for i := 0; i < n+1; i++ {
-		destinations = append(destinations, 0) //n=6인경우 [0,0,0,0,0,0,0]
-	}
-
-	destinations[1] = 1 //방문했다고 표시해주는거임!! ****때문에~!
-
-	queue := []int{1}
-
-	for len(queue) > 0 {
-		src := queue[0]
-		queue = queue[1:]
-
-		//그러면 src에서 갈 수 있는 모든 접점을 찾아본다
-		for idx, hasRoute := range graph[src] {
-			if destinations[idx] == 0 { //일종의 방문안했다는 표시... ****
-				if hasRoute {
-					queue = append(queue, idx) //넣는다
-					destinations[idx] = destinations[src] + 1
-				}
+		for _, i := range resMap[nkey] {
+			res[i] = true
+			if len(res) == k {
+				break
 			}
 		}
-	}
 
-	var mx int
-	for _, v := range destinations {
-		if mx < v {
-			mx = v
+		if len(res) == k {
+			break
 		}
 	}
 
-	var ans int
-	for _, v := range destinations {
-		if v == mx {
-			ans++
-		}
-	}
-
-	return ans
-}
-
-func buildGraph(n int, edge [][]int) [][]bool {
-	var graph [][]bool
-	for i := 0; i < n+1; i++ {
-		var row []bool
-		for j := 0; j < n+1; j++ {
-			row = append(row, false)
-		}
-
-		graph = append(graph, row)
-	}
-
-	for _, e := range edge {
-		row := e[0]
-		col := e[1]
-
-		graph[row][col] = true
-		graph[col][row] = true
-	}
-
-	return graph
-}
-
-func TestSolutionWithQueue(t *testing.T) {
-	var tests = []GraphTestCase{
-		{
-			n:      6,
-			vertex: [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}},
-			expect: 3,
-		},
-	}
-
-	for _, test := range tests {
-		ans := solutionWithQueue(test.n, test.vertex)
-		assert.DeepEqual(t, test.expect, ans)
-	}
-}
-
-// 큐를 직접 구현해서
-func solutionWithQueue(n int, edge [][]int) int {
-	//일단 그래프를 만들어야 한다
-	graph := buildGraph(n, edge)
-	//fmt.Println(graph)
-
-	var destinations []int
-	for i := 0; i < n+1; i++ {
-		destinations = append(destinations, 0) //n=6인경우 [0,0,0,0,0,0,0]
-	}
-
-	destinations[1] = 1 //방문했다고 표시해주는거임!! ****때문에~!
-
-	queue := NewQueue()
-	queue.EnQueue(1)
-
-	for !queue.IsEmpty() {
-		src := queue.DeQueue()
-
-		//그러면 src에서 갈 수 있는 모든 접점을 찾아본다
-		for idx, hasRoute := range graph[src] {
-			if destinations[idx] == 0 { //일종의 방문안했다는 표시... ****
-				if hasRoute {
-					queue.EnQueue(idx) //넣는다
-					destinations[idx] = destinations[src] + 1
-				}
-			}
-		}
-	}
-
-	var mx int
-	for _, v := range destinations {
-		if mx < v {
-			mx = v
-		}
-	}
-
-	var ans int
-	for _, v := range destinations {
-		if v == mx {
-			ans++
-		}
-	}
-
-	return ans
-}
-
-type Queue struct {
-	Q     []int
-	Front int
-	Rear  int
-}
-
-func NewQueue() *Queue {
-	return &Queue{}
-}
-
-func (q *Queue) EnQueue(value int) {
-	q.Q = append(q.Q, value)
-	q.Rear++
-}
-
-func (q *Queue) DeQueue() int {
-	val := q.Q[q.Front]
-	q.Front++
-	return val
-}
-
-func (q *Queue) IsEmpty() bool {
-	return q.Front == q.Rear
-}
-
-// Running tool: C:\Program Files\Go\bin\go.exe test -benchmem -run=^$ -bench ^BenchmarkSolutionWithQueue$ sol
-
-// goos: windows
-// goarch: amd64
-// pkg: sol
-// cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
-// === RUN   BenchmarkSolutionWithQueue
-// BenchmarkSolutionWithQueue
-// BenchmarkSolutionWithQueue-8
-//  1465453               802.0 ns/op           656 B/op         19 allocs/op
-// PASS
-// ok      sol     2.739s
-
-func BenchmarkSolutionWithQueue(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		solutionWithQueue(6, [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}})
-	}
-}
-
-// Running tool: C:\Program Files\Go\bin\go.exe test -benchmem -run=^$ -bench ^BenchmarkSolution$ sol
-
-// goos: windows
-// goarch: amd64
-// pkg: sol
-// cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
-// === RUN   BenchmarkSolution
-// BenchmarkSolution
-// BenchmarkSolution-8
-//
-//	1468044               774.5 ns/op           608 B/op         19 allocs/op
-//
-// PASS
-// ok      sol     2.307s
-func BenchmarkSolution(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		solution(6, [][]int{{3, 6}, {4, 3}, {3, 2}, {1, 3}, {1, 2}, {2, 4}, {5, 2}})
-	}
-}
-
-// 여러가지 정렬 알고리즘을 GO로 구현해보자
-type TestCase struct {
-	numbers []int
-	expect  []int
-}
-
-func TestBubbleSort(t *testing.T) {
-	var tests = []TestCase{
-		{
-			numbers: []int{7, 4, 5, 1, 3},
-			expect:  []int{1, 3, 4, 5, 7},
-		},
-	}
-
-	for _, test := range tests {
-		ans := BubbleSort(test.numbers)
-		t.Log(ans, "계산값")
-		assert.DeepEqual(t, test.expect, ans)
-	}
-}
-
-func BubbleSort(numbers []int) []int {
-	for i := 0; i < len(numbers)-1; i++ { //총 배열의 길이 - 1만큼 반복
-		for j := 0; j < len(numbers)-1-i; j++ {
-			left := numbers[j]
-			right := numbers[j+1]
-			if left > right {
-				numbers[j] = right
-				numbers[j+1] = left
-			}
-		}
-	}
-
-	return numbers
-}
-
-func TestSelectSort(t *testing.T) {
-	var tests = []TestCase{
-		{
-			numbers: []int{7, 4, 5, 1, 3},
-			expect:  []int{7, 5, 4, 3, 1},
-		},
-	}
-
-	for _, test := range tests {
-		ans := SelectSort(test.numbers)
-		t.Log(ans, "계산값")
-		assert.DeepEqual(t, test.expect, ans)
-	}
-}
-
-func SelectSort(numbers []int) []int {
-	for i := 0; i < len(numbers)-1; i++ {
-		rmi := getHighestRemainderIdx(numbers[i+1:]) + i + 1
-
-		if numbers[i] < numbers[rmi] {
-			left := numbers[i]
-			right := numbers[rmi]
-
-			numbers[i] = right
-			numbers[rmi] = left
-		}
-	}
-
-	return numbers
-}
-
-func getHighestRemainderIdx(rmNumbers []int) int {
-	var maxNum int
-	var resIdx int
-	for idx, num := range rmNumbers {
-		if maxNum < num {
-			maxNum = num
-			resIdx = idx
-		}
-	}
-
-	return resIdx
-}
-
-func TestInsertSort(t *testing.T) {
-	var tests = []TestCase{
-		{
-			numbers: []int{7, 4, 5, 1, 3},
-			expect:  []int{1, 3, 4, 5, 7},
-		},
-	}
-
-	for _, test := range tests {
-		ans := InsertSort(test.numbers)
-		t.Log(ans, "계산값")
-		assert.DeepEqual(t, test.expect, ans)
-	}
-}
-
-func InsertSort(numbers []int) []int {
-	for i := 1; i < len(numbers); i++ { //배열의 요소가 5개라면, 4번만큼 반복할 수 있다.
-		/*
-			i == 1일때는 0과 비교
-			i == 2일때는 1 => 1  vs 0
-			...
-			3 vs 2 , 2 vs 1 , 1 vs 0
-			4 vs 3 , 3 vs 2 , 2 vs 1 , 1 vs 0
-
-		*/
-
-		for j := i; j >= 1; j-- {
-			left := numbers[j-1]
-			right := numbers[j]
-
-			if left > right {
-				numbers[j] = left
-				numbers[j-1] = right
-			}
-		}
-	}
-
-	return numbers
-}
-
-func TestMergeSort(t *testing.T) {
-	var tests = []TestCase{
-		{
-			numbers: []int{7, 4, 5, 1, 3, 6, 11, 9, 20, 10},
-			expect:  []int{1, 3, 4, 5, 6, 7, 9, 10, 11, 20},
-		},
-	}
-
-	for _, test := range tests {
-		ans := MergeSort(test.numbers)
-		t.Log(ans, "계산값")
-		assert.DeepEqual(t, test.expect, ans)
-	}
-}
-
-// MergeSort recursively sorts a slice of integers using merge sort algorithm
-func MergeSort(arr []int) []int {
-	// Base case: if the slice has 1 or 0 elements, it's already sorted
-	if len(arr) <= 1 {
-		return arr
-	}
-
-	// Find the middle index
-	mid := len(arr) / 2
-
-	//호출 스택 때문에 합쳐진걸 다시 나눌 일은 없음.
-	//합쳐진 결과값은 아래 머지 함수에서만 쓰임
-
-	// Recursively sort both halves
-	left := MergeSort(arr[:mid])
-	right := MergeSort(arr[mid:])
-
-	// Merge the sorted halves
-	return merge(left, right)
-}
-
-// merge merges two sorted slices into a single sorted slice
-func merge(left, right []int) []int {
-	// Create a result slice to store the merged values
-	result := []int{}
-
-	// Indices for left and right slices
-	i, j := 0, 0
-
-	// Merge while there are elements in both slices
-	for i < len(left) && j < len(right) {
-		if left[i] < right[j] {
-			result = append(result, left[i])
-			i++
-		} else {
-			result = append(result, right[j])
-			j++
-		}
-	}
-
-	// Append any remaining elements from the left or right slice (이미 정렬이 되어 있음.. 그리고 나뉘어져 있더라도 길이 차이가 1 차이이거나 길이가 같음.)
-	result = append(result, left[i:]...)
-	result = append(result, right[j:]...)
-
-	return result
-}
-
-func TestQuickSort(t *testing.T) {
-	var tests = []TestCase{
-		{
-			numbers: []int{7, 4, 5, 1, 3, 6, 11, 9, 20, 10},
-			expect:  []int{1, 3, 4, 5, 6, 7, 9, 10, 11, 20},
-		},
-	}
-
-	for _, test := range tests {
-		ans := QuickSort(test.numbers)
-		t.Log(ans, "계산값")
-		assert.DeepEqual(t, test.expect, ans)
-	}
-}
-
-func QuickSort(arr []int) []int {
-	if len(arr) <= 1 {
-		return arr
-	}
-
-	pivotIdx := len(arr) / 2
-
-	left, right := getLeftAndRight(pivotIdx, arr)
-
-	newLeft := QuickSort(left)
-	newRight := QuickSort(right)
-
-	return append(append(newLeft, arr[pivotIdx]), newRight...)
-}
-
-/*
-매번 퀵 정렬이 호출될 때마다 고르는 피벗의 위치가 달라진다면?
-
-원래 알고리즘에서는
-1번째 호출에서 i번째를 피벗으로 고르고,
-2번째 호출에서 i번째를 피벗으로 고르고,
-3번째 호출에서도 i번째를 피벗으로 고른다.
-
-하지만 만약 '난수'를 생성해 피벗을 고른다면
-
-1번째 호출에서는 i번째를 피벗으로 고르고,
-2번째 호출에서는 j번째를 피벗으로 고르고,
-3번째 호출에서는 k번째를 피벗으로 고르게 된다!
-
-만약 최악의 순서인 배열이 들어온다고 가정해보자.
-그래도 난수를 사용하면 피벗을 고르는 위치가 계속 바뀐다.
-피벗으로 고른 모든 숫자가 최대/최소값일 확률은 0에 수렴하게 된다.
-
-최악의 인풋이 들어와도
-우리는 평균적인 경우의 성능을 얻을 수 있다.
-
-n개의 범위에서 난수를 생성할 때는 O(n)의 연산이 더 들어간다.
-하지만 파티셔닝도 O(n)이기 때문에 전체 복잡도는 바뀌지 않는다.
-
-난수를 생성해서 피벗을 고른다 해도 여전히 최악의 경우가 없어진 것은 아니다.
-하지만 어떤 인풋이 들어와도 O(n^2) 연산을 하게 될 가능성은 0에 수렴한다.
-
-마음놓고 퀵 정렬의 성능을 즐길 수 있게 된 것이다!
-
-랜덤으로 알고리즘을 더 좋게 개선한 우아한 사례다.
-*/
-func BetterQuickSort(arr []int) []int {
-	if len(arr) <= 1 {
-		return arr
-	}
-
-	pivotIdx := getRandomIdx(len(arr))
-
-	left, right := getLeftAndRight(pivotIdx, arr)
-
-	newLeft := QuickSort(left)
-	newRight := QuickSort(right)
-
-	return append(append(newLeft, arr[pivotIdx]), newRight...)
-}
-
-func getRandomIdx(arrlen int) int {
-	rand.NewSource(time.Now().UnixNano())
-
-	return rand.Intn(arrlen)
-}
-
-func getLeftAndRight(pivotIdx int, arr []int) ([]int, []int) {
-	left := []int{}
-	right := []int{}
-	for idx, num := range arr {
-		if idx == pivotIdx {
-			continue
-		}
-
-		if num <= arr[pivotIdx] {
-			left = append(left, num)
-		} else {
-			right = append(right, num)
-		}
-	}
-
-	return left, right
-}
-
-/*
-goos: windows
-goarch: amd64
-pkg: sol
-cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
-=== RUN   BenchmarkQuickSort
-BenchmarkQuickSort
-BenchmarkQuickSort-8
-
-	884589              1142 ns/op             976 B/op         39 allocs/op
-
-PASS
-ok      sol     1.817s
-*/
-func BenchmarkQuickSort(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		QuickSort([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
-	}
-}
-
-/*
-실제 벤치마크에서도 더 뛰어난 성능을 보인다.
-goos: windows
-goarch: amd64
-pkg: sol
-cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
-=== RUN   BenchmarkBetterQuickSort
-BenchmarkBetterQuickSort
-BenchmarkBetterQuickSort-8
-
-	122595              8777 ns/op            1109 B/op         40 allocs/op
-
-PASS
-ok      sol     1.552s
-*/
-func BenchmarkBetterQuickSort(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		BetterQuickSort([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
-	}
+	return res
 }
