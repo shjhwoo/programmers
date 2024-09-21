@@ -50,6 +50,7 @@ func solution(number string, k int) string { //결과값에는 뺴야 하는 숫
 	var rmCnt int
 	var lastIdx int
 	for idx, numCh := range strings.Split(number, "") {
+
 		if idx == 0 {
 			stack = append(stack, numCh)
 		} else {
@@ -94,6 +95,28 @@ func solution(number string, k int) string { //결과값에는 뺴야 하는 숫
 
 	if lastIdx != 0 {
 		return strings.Join(stack, "") + number[lastIdx+1:]
+	}
+
+	return strings.Join(stack, "")
+}
+
+func solution2(number string, k int) string {
+	var stack []string
+	var rmCnt int
+
+	for _, char := range strings.Split(number, "") {
+		for rmCnt < k && stack[len(stack)-1] < char {
+			stack = stack[:len(stack)-1]
+			rmCnt++
+		}
+
+		stack = append(stack, char)
+	}
+
+	//내림차순으로 되어있는 숫자라면은 안 빠지고 그대로 있기 때문에.
+	for rmCnt < k {
+		stack = stack[:len(stack)-1]
+		rmCnt++
 	}
 
 	return strings.Join(stack, "")
