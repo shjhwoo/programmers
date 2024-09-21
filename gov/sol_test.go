@@ -30,6 +30,11 @@ func TestSolution(t *testing.T) {
 			k:      4,
 			expect: "775841",
 		},
+		{
+			number: "9876543",
+			k:      4,
+			expect: "987",
+		},
 	}
 
 	for _, test := range tests {
@@ -40,7 +45,6 @@ func TestSolution(t *testing.T) {
 
 // 최대한 앞에 있는 것 => 그 다음으로 제일 작은 수부터 빼낸다.
 func solution(number string, k int) string { //결과값에는 뺴야 하는 숫자의 인덱스 위치를 저장해둔다
-
 	var stack []string
 
 	var rmCnt int
@@ -83,5 +87,14 @@ func solution(number string, k int) string { //결과값에는 뺴야 하는 숫
 		}
 	}
 
-	return strings.Join(stack, "") + number[lastIdx+1:]
+	for rmCnt < k {
+		stack = stack[:len(stack)-1]
+		rmCnt++
+	}
+
+	if lastIdx != 0 {
+		return strings.Join(stack, "") + number[lastIdx+1:]
+	}
+
+	return strings.Join(stack, "")
 }
