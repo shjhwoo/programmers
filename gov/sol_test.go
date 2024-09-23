@@ -68,7 +68,28 @@ func TestGetPrimeNumbersBetween(t *testing.T) {
 	}
 }
 
-func GetPrimeNumbersBetween(left, right int) []int {
+/*
+function get_primes(num){
+    const prime = [false, false, ...Array(num-1).fill(true)] //0과 1은 소수가 아니라서 false로 둔 것임.
+
+    for (let i = 2 ; i * i <=  num; i += 1){ //어짜피 a * b === n 이면, a로 나눠떨어지면 b로 나눠떨어지는 건 똑같으니까 b에 대해서까지 확인 필요없다.
+        if (prime[i]){
+            for (let j = i * 2 ; j <= num ; j += i){
+                prime[j] = false
+            }
+        }
+    }
+
+    return prime.map((num,idx) => {
+        if (num){
+            return idx
+        }else{
+            return 0
+        }}).filter(num => num > 0)
+}
+*/
+
+func GetPrimeNumbersBetween(left, right int) []int { //가장 효율적이다.
 	var result []int
 
 	/*
@@ -107,24 +128,3 @@ func GetPrimeNumbersBetween(left, right int) []int {
 
 	return result
 }
-
-/*
-function get_primes(num){
-    const prime = [false, false, ...Array(num-1).fill(true)]
-
-    for (let i = 2 ; i * i <=  num; i += 1){
-        if (prime[i]){
-            for (let j = i * 2 ; j <= num ; j += i){
-                prime[j] = false
-            }
-        }
-    }
-
-    return prime.map((num,idx) => {
-        if (num){
-            return idx
-        }else{
-            return 0
-        }}).filter(num => num > 0)
-}
-*/
