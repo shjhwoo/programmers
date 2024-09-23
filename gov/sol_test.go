@@ -1,123 +1,130 @@
 package main_test
 
 import (
-	"strings"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
-type TestCase struct {
-	number string
-	k      int //제거할 수!
-	expect string
+type Case struct {
+	input  int
+	expect bool
 }
 
-func TestSolution(t *testing.T) {
-	var tests = []TestCase{
+func TestIsPrimeNumber(t *testing.T) {
+	tests := []Case{
 		{
-			number: "1924",
-			k:      2,
-			expect: "94",
+			input:  41,
+			expect: true,
 		},
 		{
-			number: "1231234",
-			k:      3,
-			expect: "3234",
-		},
-		{
-			number: "4177252841",
-			k:      4,
-			expect: "775841",
-		},
-		{
-			number: "9876543",
-			k:      4,
-			expect: "987",
+			input:  78,
+			expect: false,
 		},
 	}
 
 	for _, test := range tests {
-		ans := solution(test.number, test.k)
+		ans := IsPrimeNumber(test.input)
 		assert.DeepEqual(t, test.expect, ans)
 	}
 }
 
-// 최대한 앞에 있는 것 => 그 다음으로 제일 작은 수부터 빼낸다.
-func solution(number string, k int) string { //결과값에는 뺴야 하는 숫자의 인덱스 위치를 저장해둔다
-	var stack []string
-
-	var rmCnt int
-	var lastIdx int
-	for idx, numCh := range strings.Split(number, "") {
-
-		if idx == 0 {
-			stack = append(stack, numCh)
-		} else {
-
-			top := stack[len(stack)-1]
-
-			if top >= numCh {
-				stack = append(stack, numCh)
-			} else {
-				for top < numCh {
-					stack = stack[:len(stack)-1]
-					rmCnt++
-					if rmCnt == k {
-						lastIdx = idx
-						break
-					}
-
-					if len(stack) > 0 {
-						top = stack[len(stack)-1]
-					}
-
-					if len(stack) == 0 {
-						break
-					}
-				}
-
-				stack = append(stack, numCh)
-
-			}
-
-			if rmCnt == k {
-				break
-			}
-
+func IsPrimeNumber(n int) bool {
+	var result = true
+	for i := 2; i*i < n; i++ {
+		if n%i == 0 {
+			result = false
+			break
 		}
 	}
 
-	for rmCnt < k {
-		stack = stack[:len(stack)-1]
-		rmCnt++
-	}
-
-	if lastIdx != 0 {
-		return strings.Join(stack, "") + number[lastIdx+1:]
-	}
-
-	return strings.Join(stack, "")
+	return result
 }
 
-func solution2(number string, k int) string {
-	var stack []string
-	var rmCnt int
+type Case2 struct {
+	start  int
+	end    int
+	expect []int
+}
 
-	for _, char := range strings.Split(number, "") {
-		for rmCnt < k && stack[len(stack)-1] < char {
-			stack = stack[:len(stack)-1]
-			rmCnt++
+func TestGetPrimeNumbersBetween(t *testing.T) {
+	tests := []Case2{
+		{
+			start:  1,
+			end:    10,
+			expect: []int{2, 3, 5, 7},
+		},
+		{
+			start:  1,
+			end:    60,
+			expect: []int{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59},
+		},
+	}
+
+	for _, test := range tests {
+		ans := GetPrimeNumbersBetween(test.start, test.end)
+		t.Log(ans)
+		assert.DeepEqual(t, test.expect, ans)
+	}
+}
+
+func GetPrimeNumbersBetween(left, right int) []int {
+	var result []int
+
+	/*
+		첫번째 수의 배수를 모두 체크한다
+		두번째 수의 배수를 모두 체크한다 (앞전의 체크된 수 제외하고)
+		세번째 수의 배수를 모두 체크한다 (앞전의 체크된 수 제외하고)
+		...
+		더 이상 체크할 수 있는 수가 없으면 종료한다
+
+		=. 체크되지 않고 남아있는 수를 모아서 결과값으로 돌려준다.
+	*/
+
+	var checkedNumbers = make(map[int]bool)
+
+	var start = left
+	var end = right
+
+	if left == 1 {
+		start = 2
+	}
+
+	for i := start; i < end+1; i++ {
+		for j := 2; j < (end+1/i)+1; j++ {
+			notPrime := i * j
+			if _, exist := checkedNumbers[notPrime]; !exist {
+				checkedNumbers[notPrime] = true
+			}
 		}
-
-		stack = append(stack, char)
 	}
 
-	//내림차순으로 되어있는 숫자라면은 안 빠지고 그대로 있기 때문에.
-	for rmCnt < k {
-		stack = stack[:len(stack)-1]
-		rmCnt++
+	for i := start; i < end+1; i++ {
+		if !checkedNumbers[i] {
+			result = append(result, i)
+		}
 	}
 
-	return strings.Join(stack, "")
+	return result
 }
+
+/*
+function get_primes(num){
+    const prime = [false, false, ...Array(num-1).fill(true)]
+
+    for (let i = 2 ; i * i <=  num; i += 1){
+        if (prime[i]){
+            for (let j = i * 2 ; j <= num ; j += i){
+                prime[j] = false
+            }
+        }
+    }
+
+    return prime.map((num,idx) => {
+        if (num){
+            return idx
+        }else{
+            return 0
+        }}).filter(num => num > 0)
+}
+*/
