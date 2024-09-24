@@ -42,30 +42,57 @@ func IsPrimeNumber(n int) bool {
 }
 
 type Case2 struct {
-	start  int
-	end    int
+	num    int
 	expect []int
 }
 
 func TestGetPrimeNumbersBetween(t *testing.T) {
 	tests := []Case2{
 		{
-			start:  1,
-			end:    10,
+			num:    10,
 			expect: []int{2, 3, 5, 7},
 		},
 		{
-			start:  1,
-			end:    60,
+			num:    59,
 			expect: []int{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59},
 		},
 	}
 
 	for _, test := range tests {
-		ans := GetPrimeNumbersBetween(test.start, test.end)
+		ans := GetPrimeNumbersLessThanOrEqualTo(test.num)
 		t.Log(ans)
 		assert.DeepEqual(t, test.expect, ans)
 	}
+}
+
+func GetPrimeNumbersLessThanOrEqualTo(num int) []int { //가장 효율적이다.
+
+	var isPrime = []bool{}
+	for i := 0; i < num+1; i++ {
+		if i <= 1 {
+			isPrime = append(isPrime, false)
+		} else {
+			isPrime = append(isPrime, true)
+		}
+	}
+
+	for i := 2; i*i < num; i++ {
+		if isPrime[i] {
+			for j := i * 2; j <= num; j += i {
+				isPrime[j] = false
+			}
+		}
+	}
+
+	var result []int
+
+	for idx, candidate := range isPrime {
+		if candidate {
+			result = append(result, idx)
+		}
+	}
+
+	return result
 }
 
 /*
@@ -88,43 +115,3 @@ function get_primes(num){
         }}).filter(num => num > 0)
 }
 */
-
-func GetPrimeNumbersBetween(left, right int) []int { //가장 효율적이다.
-	var result []int
-
-	/*
-		첫번째 수의 배수를 모두 체크한다
-		두번째 수의 배수를 모두 체크한다 (앞전의 체크된 수 제외하고)
-		세번째 수의 배수를 모두 체크한다 (앞전의 체크된 수 제외하고)
-		...
-		더 이상 체크할 수 있는 수가 없으면 종료한다
-
-		=. 체크되지 않고 남아있는 수를 모아서 결과값으로 돌려준다.
-	*/
-
-	var checkedNumbers = make(map[int]bool)
-
-	var start = left
-	var end = right
-
-	if left == 1 {
-		start = 2
-	}
-
-	for i := start; i < end+1; i++ {
-		for j := 2; j < (end+1/i)+1; j++ {
-			notPrime := i * j
-			if _, exist := checkedNumbers[notPrime]; !exist {
-				checkedNumbers[notPrime] = true
-			}
-		}
-	}
-
-	for i := start; i < end+1; i++ {
-		if !checkedNumbers[i] {
-			result = append(result, i)
-		}
-	}
-
-	return result
-}
