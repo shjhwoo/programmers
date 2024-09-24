@@ -65,7 +65,7 @@ func TestGetPrimeNumbersBetween(t *testing.T) {
 	}
 }
 
-func GetPrimeNumbersLessThanOrEqualTo(num int) []int { //가장 효율적이다.
+func GetPrimeNumbersLessThanOrEqualTo(num int) []int { //가장 효율적이다. 시간복잡도:: https://box0830.tistory.com/384
 
 	var isPrime = []bool{}
 	for i := 0; i < num+1; i++ {
