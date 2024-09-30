@@ -6,112 +6,97 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-type Case struct {
-	input  int
-	expect bool
+type Node struct {
+	Value int
+	Left  *Node
+	Right *Node
 }
 
-func TestIsPrimeNumber(t *testing.T) {
-	tests := []Case{
-		{
-			input:  41,
-			expect: true,
-		},
-		{
-			input:  78,
-			expect: false,
-		},
-	}
-
-	for _, test := range tests {
-		ans := IsPrimeNumber(test.input)
-		assert.DeepEqual(t, test.expect, ans)
+func NewNode(value int) *Node {
+	return &Node{
+		Value: value,
 	}
 }
 
-func IsPrimeNumber(n int) bool {
-	var result = true
-	for i := 2; i*i < n; i++ {
-		if n%i == 0 {
-			result = false
-			break
-		}
+func setTree() *Node {
+	tree := &Node{
+		Value: 1,
 	}
 
-	return result
+	tree.Left = NewNode(2)
+	tree.Right = NewNode(3)
+
+	tree.Left.Left = NewNode(4)
+	tree.Left.Right = NewNode(5)
+
+	tree.Right.Left = NewNode(6)
+	tree.Right.Right = NewNode(7)
+
+	tree.Right.Right.Left = NewNode(8)
+	tree.Right.Right.Right = NewNode(9)
+
+	return tree
 }
 
-type Case2 struct {
-	num    int
-	expect []int
+func (n *Node) PrintPreOrder() []int {
+	mid := []int{n.Value}
+
+	if n.Left == nil && n.Right == nil {
+		return mid
+	}
+
+	lefts := n.Left.PrintPreOrder()
+	rights := n.Right.PrintPreOrder()
+
+	return append(append(mid, lefts...), rights...)
 }
 
-func TestGetPrimeNumbersBetween(t *testing.T) {
-	tests := []Case2{
-		{
-			num:    10,
-			expect: []int{2, 3, 5, 7},
-		},
-		{
-			num:    59,
-			expect: []int{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59},
-		},
+func (n *Node) PrintInOrder() []int {
+	mid := []int{n.Value}
+	if n.Left == nil && n.Right == nil {
+		return mid
 	}
 
-	for _, test := range tests {
-		ans := GetPrimeNumbersLessThanOrEqualTo(test.num)
-		t.Log(ans)
-		assert.DeepEqual(t, test.expect, ans)
-	}
+	lefts := n.Left.PrintInOrder()
+	rights := n.Right.PrintInOrder()
+
+	return append(append(lefts, mid...), rights...)
 }
 
-func GetPrimeNumbersLessThanOrEqualTo(num int) []int { //가장 효율적이다. 시간복잡도:: https://box0830.tistory.com/384
-
-	var isPrime = []bool{}
-	for i := 0; i < num+1; i++ {
-		if i <= 1 {
-			isPrime = append(isPrime, false)
-		} else {
-			isPrime = append(isPrime, true)
-		}
+func (n *Node) PrintPostOrder() []int {
+	mid := []int{n.Value}
+	if n.Left == nil && n.Right == nil {
+		return mid
 	}
 
-	for i := 2; i*i < num; i++ {
-		if isPrime[i] {
-			for j := i * 2; j <= num; j += i {
-				isPrime[j] = false
-			}
-		}
-	}
+	lefts := n.Left.PrintPostOrder()
+	rights := n.Right.PrintPostOrder()
 
-	var result []int
-
-	for idx, candidate := range isPrime {
-		if candidate {
-			result = append(result, idx)
-		}
-	}
-
-	return result
+	return append(append(lefts, rights...), mid...)
 }
 
-/*
-function get_primes(num){
-    const prime = [false, false, ...Array(num-1).fill(true)] //0과 1은 소수가 아니라서 false로 둔 것임.
+func TestPreOrderTree(t *testing.T) {
+	tree := setTree()
 
-    for (let i = 2 ; i * i <=  num; i += 1){ //어짜피 a * b === n 이면, a로 나눠떨어지면 b로 나눠떨어지는 건 똑같으니까 b에 대해서까지 확인 필요없다.
-        if (prime[i]){
-            for (let j = i * 2 ; j <= num ; j += i){
-                prime[j] = false
-            }
-        }
-    }
+	preOrder := tree.PrintPreOrder()
 
-    return prime.map((num,idx) => {
-        if (num){
-            return idx
-        }else{
-            return 0
-        }}).filter(num => num > 0)
+	assert.DeepEqual(t, []int{1, 2, 4, 5, 3, 6, 7, 8, 9}, preOrder)
 }
-*/
+
+func TestInOrder(t *testing.T) {
+	tree := setTree()
+
+	inOrder := tree.PrintInOrder()
+
+	assert.DeepEqual(t, []int{4, 2, 5, 1, 6, 3, 8, 7, 9}, inOrder)
+
+}
+
+func TestPostOrder(t *testing.T) {
+	tree := setTree()
+
+	inOrder := tree.PrintPostOrder()
+
+	assert.DeepEqual(t, []int{4, 5, 2, 6, 8, 9, 7, 3, 1}, inOrder)
+
+}
