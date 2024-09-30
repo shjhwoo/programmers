@@ -100,3 +100,142 @@ func TestPostOrder(t *testing.T) {
 	assert.DeepEqual(t, []int{4, 5, 2, 6, 8, 9, 7, 3, 1}, inOrder)
 
 }
+
+//순열과 조합
+//성능, 콜 스택의 위험성 때문에 성능상 스택으로 구현하는 것이 좋다.
+//하지만 코테에서는 시간복잡도 자체가 크기 때문에 코테에서는 N이 크게 나오는 경우는 드물다
+//이에 재귀로 외우는게 직관적이고 편하다.
+
+/*
+순열이란?
+
+"서로 다른" N개의 대상 중에서 M개를 골라 나열하는 방법을 구하는 것
+
+시간복잡도는 O(N!) 이 된다. 매우크다
+*/
+func Permutations(arr []int, picks int) int {
+	//탈출 조건
+	if picks == 1 {
+		return len(arr)
+	}
+
+	//재귀
+	return Permutations(arr[:len(arr)-1], picks-1) * len(arr)
+}
+
+func TestPermutations(t *testing.T) {
+	assert.Equal(t, 24, Permutations([]int{4, 3, 2, 1}, 3))
+	assert.Equal(t, 12, Permutations([]int{4, 3, 2, 1}, 2))
+}
+
+// 순열 실제 경우를 프린트아웃하는 함수
+func PrintPermutationCases(arr []int, n int) [][]int {
+	if n == 1 {
+		var result [][]int
+		for _, num := range arr {
+			result = append(result, []int{num})
+		}
+
+		return result
+	}
+
+	var result [][]int
+
+	for idx, num := range arr {
+		var subArr []int
+		for i := 0; i < len(arr); i++ {
+			if i == idx {
+				continue
+			}
+			subArr = append(subArr, arr[i])
+		}
+
+		pre := PrintPermutationCases(subArr, n-1)
+
+		for _, c := range pre {
+			result = append(result, append(c, num))
+		}
+	}
+
+	return result
+}
+
+func TestPrintPermutationCases(t *testing.T) {
+	cases := PrintPermutationCases([]int{4, 3, 2, 1}, 3)
+
+	t.Log(cases)
+
+	assert.DeepEqual(t, 24, len(cases))
+
+	for _, c := range cases {
+		assert.Equal(t, 3, len(c))
+	}
+}
+
+/*
+조합이란?
+
+서로 다른 N개의 대상 중에서 M개를 고르는 방법의 수를 구하는 것
+순서가 중요하지 않다.
+*/
+func Combinations(arr []int, n int) int {
+	//탈출 조건
+	if n == 1 {
+		return len(arr)
+	}
+
+	var cases int
+
+	for idx, _ := range arr {
+		subArr := arr[idx+1:]
+		subCases := Combinations(subArr, n-1)
+		cases += subCases
+	}
+
+	//재귀 조건
+	return cases //Combinations(arr[:len(arr)-1], n-1) * len(arr) / n
+}
+
+func TestCombinations(t *testing.T) {
+	assert.Equal(t, 4, Combinations([]int{4, 3, 2, 1}, 3))
+	assert.Equal(t, 6, Combinations([]int{4, 3, 2, 1}, 2))
+}
+
+// 조합 실제 경우를 프린트아웃하는 함수
+func PrintCombinationCases(arr []int, n int) [][]int {
+	//탈출 조건은 동일하다
+	if n == 1 {
+		var result [][]int
+		for _, num := range arr {
+			result = append(result, []int{num})
+		}
+
+		return result
+	}
+
+	var result [][]int
+
+	for idx, num := range arr {
+		var subArr = arr[idx+1:] //중간 요소만 빼는게 아니고 이후 요소부터 고르는 이유는 조합이기 때문. 앞전 요소를 다시 고를 이유가 없다
+
+		pre := PrintCombinationCases(subArr, n-1)
+
+		for _, c := range pre {
+			result = append(result, append(c, num))
+		}
+	}
+
+	return result
+}
+
+func TestPrintCombinationCases(t *testing.T) {
+	cases := PrintCombinationCases([]int{4, 3, 2, 1}, 3)
+
+	t.Log(cases)
+
+	assert.DeepEqual(t, 4, len(cases))
+
+	for _, c := range cases {
+		assert.Equal(t, 3, len(c))
+	}
+}
