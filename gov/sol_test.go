@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"math"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -238,4 +239,113 @@ func TestPrintCombinationCases(t *testing.T) {
 	for _, c := range cases {
 		assert.Equal(t, 3, len(c))
 	}
+}
+
+/*
+
+다익스트라 알고리즘을 적용한 코테 문제
+*/
+
+type TestCase struct {
+	N      int
+	road   [][]int
+	k      int
+	expect int
+}
+
+func TestCountDeliveryAbleTown(t *testing.T) {
+	tests := []TestCase{
+		{
+			N: 5,
+			road: [][]int{
+				{1, 2, 1},
+				{2, 3, 3},
+				{5, 2, 2},
+				{1, 4, 2},
+				{5, 3, 1},
+				{5, 4, 2},
+			},
+			k:      3,
+			expect: 4,
+		},
+		{
+			N: 6,
+			road: [][]int{
+				{1, 2, 1},
+				{1, 3, 2},
+				{2, 3, 2},
+				{3, 4, 3},
+				{3, 5, 2},
+				{3, 5, 3},
+				{5, 6, 1},
+			},
+			k:      4,
+			expect: 4,
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expect, solution(test.N, test.road, test.k))
+	}
+}
+
+func solution(N int, road [][]int, k int) int {
+	var isVisited = []bool{false, true}
+	infiniteInt := math.MaxInt64
+	var shortestDistance = []int{0, 0}
+
+	for i := 2; i < N+1; i++ {
+		isVisited = append(isVisited, false)
+		shortestDistance = append(shortestDistance, infiniteInt)
+	}
+
+	//시작점은 무조건 1번 마을이다.
+	/*
+			1 ~ 2
+			1 ~ 3
+			1 ~ 4
+			...
+			1 ~ N
+
+		2부터 N까지.
+	*/
+
+	var queue = []int{1}
+
+	for len(queue) > 0 {
+		first := queue[0]
+		queue = queue[1:]
+
+		for _, route := range road {
+			start := route[0]
+			dest := route[1]
+			distance := route[2]
+
+			if start == first {
+				queue = append(queue, dest)
+			}
+		}
+	}
+
+	for i := 1; i < N+1; i++ {
+		for _, route := range road {
+			start := route[0]
+			dest := route[1]
+			distance := route[2]
+
+			//처음은 1에서 이웃한 정점을 무조건 갱신해놓는다
+			if start == 1 {
+				if shortestDistance[dest] > distance {
+					shortestDistance[dest] = distance
+					isVisited[dest] = true
+				}
+			} else {
+				//
+			}
+		}
+	}
+
+	answer := 1 //같은 마을은 무조건 배달 가능하니까 포함시킨다.
+
+	return answer
 }
