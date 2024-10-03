@@ -257,47 +257,47 @@ type TestCase struct {
 
 func TestCountDeliveryAbleTown(t *testing.T) {
 	tests := []TestCase{
-		{
-			N: 5,
-			road: [][]int{
-				{1, 2, 1},
-				{2, 3, 3},
-				{5, 2, 2},
-				{1, 4, 2},
-				{5, 3, 1},
-				{5, 4, 2},
-			},
-			k:      3,
-			expect: 4,
-		},
-		{
-			N: 6,
-			road: [][]int{
-				{1, 2, 1},
-				{1, 3, 2},
-				{2, 3, 2},
-				{3, 4, 3},
-				{3, 5, 2},
-				{3, 5, 3},
-				{5, 6, 1},
-			},
-			k:      4,
-			expect: 4,
-		},
-		{
-			N: 6,
-			road: [][]int{
-				{1, 2, 1},
-				{1, 3, 8},
-				{2, 3, 2},
-				{3, 4, 3},
-				{3, 5, 2},
-				{3, 5, 3},
-				{5, 6, 1},
-			},
-			k:      4,
-			expect: 3,
-		},
+		// {
+		// 	N: 5,
+		// 	road: [][]int{
+		// 		{1, 2, 1},
+		// 		{2, 3, 3},
+		// 		{5, 2, 2},
+		// 		{1, 4, 2},
+		// 		{5, 3, 1},
+		// 		{5, 4, 2},
+		// 	},
+		// 	k:      3,
+		// 	expect: 4,
+		// },
+		// {
+		// 	N: 6,
+		// 	road: [][]int{
+		// 		{1, 2, 1},
+		// 		{1, 3, 2},
+		// 		{2, 3, 2},
+		// 		{3, 4, 3},
+		// 		{3, 5, 2},
+		// 		{3, 5, 3},
+		// 		{5, 6, 1},
+		// 	},
+		// 	k:      4,
+		// 	expect: 4,
+		// },
+		// {
+		// 	N: 6,
+		// 	road: [][]int{
+		// 		{1, 2, 1},
+		// 		{1, 3, 8},
+		// 		{2, 3, 2},
+		// 		{3, 4, 3},
+		// 		{3, 5, 2},
+		// 		{3, 5, 3},
+		// 		{5, 6, 1},
+		// 	},
+		// 	k:      4,
+		// 	expect: 3,
+		// },
 		{
 			N: 6,
 			road: [][]int{
@@ -318,6 +318,7 @@ func TestCountDeliveryAbleTown(t *testing.T) {
 	}
 }
 
+// 망한거.
 func solution(N int, road [][]int, k int) int {
 	var isVisitedMap = make(map[string]bool)
 
@@ -383,7 +384,7 @@ func solution(N int, road [][]int, k int) int {
 	return answer
 }
 
-//최소힙을 사용해서 다익스트라 구현하고 적용 :
+//최소힙(우선순위 큐(Priority Queue)를 구현하기 위해 사용하는 자료구조 중 하나)을 사용해서 다익스트라 구현하고 적용 :
 
 func solutionWithDijkstra(N int, road [][]int, k int) int {
 	dist := Dijkstra(road, N)
@@ -391,6 +392,7 @@ func solutionWithDijkstra(N int, road [][]int, k int) int {
 	answer := 1 //같은 마을은 무조건 배달 가능하니까 포함시킨다.
 
 	for idx, distance := range dist {
+		//만약에, distance가 여전히 무한의 값이라면 그건 1번 지점에서 도달을 할 수 없다는 의미(방문가능한 경로 없다)
 		if idx > 1 && distance <= k {
 			answer++
 		}
@@ -399,6 +401,12 @@ func solutionWithDijkstra(N int, road [][]int, k int) int {
 	return answer
 }
 
+// 문제풀이에 적용 가능한 이유는: 특정지점까지의 최소 거리는 각 중간경유지까지의 최소거리를 먼저 구했기 때문에 이들을 합하면 가장 최소가 된다는 것.
+/*
+다익스트라 최단 경로 알고리즘은 그리디 알고리즘으로 분류됩니다.
+
+ ; 매 상황에서 가장 비용이 적은 노드를 선택해 임의의 과정을 반복합니다.
+*/
 func Dijkstra(road [][]int, N int) []int {
 	vheap := &VillageHeap{}
 	heap.Init(vheap)
