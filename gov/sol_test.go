@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -282,6 +283,33 @@ func TestCountDeliveryAbleTown(t *testing.T) {
 			k:      4,
 			expect: 4,
 		},
+		{
+			N: 6,
+			road: [][]int{
+				{1, 2, 1},
+				{1, 3, 8},
+				{2, 3, 2},
+				{3, 4, 3},
+				{3, 5, 2},
+				{3, 5, 3},
+				{5, 6, 1},
+			},
+			k:      4,
+			expect: 3,
+		},
+		{
+			N: 6,
+			road: [][]int{
+				{1, 2, 29},
+				{1, 6, 2},
+				{2, 3, 2},
+				{3, 4, 3},
+				{4, 5, 7},
+				{5, 6, 1},
+			},
+			k:      20,
+			expect: 6,
+		},
 	}
 
 	for _, test := range tests {
@@ -290,25 +318,13 @@ func TestCountDeliveryAbleTown(t *testing.T) {
 }
 
 func solution(N int, road [][]int, k int) int {
-	var isVisited = []bool{false, true}
+	var isVisitedMap = make(map[string]bool)
+
 	infiniteInt := math.MaxInt64
 	var shortestDistance = []int{0, 0}
-
 	for i := 2; i < N+1; i++ {
-		isVisited = append(isVisited, false)
 		shortestDistance = append(shortestDistance, infiniteInt)
 	}
-
-	//시작점은 무조건 1번 마을이다.
-	/*
-			1 ~ 2
-			1 ~ 3
-			1 ~ 4
-			...
-			1 ~ N
-
-		2부터 N까지.
-	*/
 
 	var queue = []int{1}
 
@@ -322,30 +338,46 @@ func solution(N int, road [][]int, k int) int {
 			distance := route[2]
 
 			if start == first {
-				queue = append(queue, dest)
-			}
-		}
-	}
-
-	for i := 1; i < N+1; i++ {
-		for _, route := range road {
-			start := route[0]
-			dest := route[1]
-			distance := route[2]
-
-			//처음은 1에서 이웃한 정점을 무조건 갱신해놓는다
-			if start == 1 {
-				if shortestDistance[dest] > distance {
-					shortestDistance[dest] = distance
-					isVisited[dest] = true
+				visitKey := fmt.Sprintf("%d_%d_%d", start, dest, distance)
+				if isVisitedMap[visitKey] {
+					continue
 				}
-			} else {
-				//
+
+				//1번 정점에서 dest까지 가는 거리를 계산
+				distanceToDest := distance + shortestDistance[start]
+
+				//더 짧은 경로가 있다면 업데이트.
+				if distanceToDest < shortestDistance[dest] {
+					queue = append(queue, dest)
+					isVisitedMap[visitKey] = true
+					shortestDistance[dest] = distanceToDest
+				}
+			} else if dest == first {
+				visitKey := fmt.Sprintf("%d_%d_%d", dest, start, distance)
+				if isVisitedMap[visitKey] {
+					continue
+				}
+
+				//1번 정점에서 dest까지 가는 거리를 계산
+				distanceToDest := distance + shortestDistance[dest]
+
+				//더 짧은 경로가 있다면 업데이트.
+				if distanceToDest < shortestDistance[start] {
+					queue = append(queue, start)
+					isVisitedMap[visitKey] = true
+					shortestDistance[start] = distanceToDest
+				}
 			}
 		}
 	}
 
 	answer := 1 //같은 마을은 무조건 배달 가능하니까 포함시킨다.
+
+	for idx, distance := range shortestDistance {
+		if idx > 1 && distance <= k {
+			answer++
+		}
+	}
 
 	return answer
 }
