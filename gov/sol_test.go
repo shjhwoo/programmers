@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"container/heap"
 	"fmt"
 	"math"
 	"testing"
@@ -313,7 +314,7 @@ func TestCountDeliveryAbleTown(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		assert.Equal(t, test.expect, solution(test.N, test.road, test.k))
+		assert.Equal(t, test.expect, solutionWithDijkstra(test.N, test.road, test.k))
 	}
 }
 
@@ -380,4 +381,111 @@ func solution(N int, road [][]int, k int) int {
 	}
 
 	return answer
+}
+
+//최소힙을 사용해서 다익스트라 구현하고 적용 :
+
+func solutionWithDijkstra(N int, road [][]int, k int) int {
+	dist := Dijkstra(road, N)
+
+	answer := 1 //같은 마을은 무조건 배달 가능하니까 포함시킨다.
+
+	for idx, distance := range dist {
+		if idx > 1 && distance <= k {
+			answer++
+		}
+	}
+
+	return answer
+}
+
+func Dijkstra(road [][]int, N int) []int {
+	vheap := &VillageHeap{}
+	heap.Init(vheap)
+	heap.Push(vheap, Village{
+		Name: 1,
+		Cost: 0,
+	})
+
+	infiniteInt := math.MaxInt64
+	var shortestDistance = []int{0, 0}
+	for i := 2; i < N+1; i++ {
+		shortestDistance = append(shortestDistance, infiniteInt)
+	}
+
+	for vheap.Len() > 0 {
+		lowest := vheap.Pop()
+		currentVill := lowest.(Village).Name
+		currentCost := lowest.(Village).Cost
+
+		for _, r := range road {
+			start := r[0]
+			dest := r[1]
+			distance := r[2]
+
+			nextCost := distance + currentCost
+
+			if start == currentVill && nextCost < shortestDistance[dest] {
+				shortestDistance[dest] = nextCost
+				vheap.Push(Village{
+					Name: dest,
+					Cost: nextCost,
+				})
+			} else if dest == currentVill && nextCost < shortestDistance[start] {
+				shortestDistance[start] = nextCost
+				vheap.Push(Village{
+					Name: start,
+					Cost: nextCost,
+				})
+			}
+		}
+	}
+
+	return shortestDistance
+}
+
+//최소힙부터 구현
+
+type VillageHeap []Village
+
+func (vh VillageHeap) Len() int {
+	return len(vh)
+}
+
+func (vh VillageHeap) Less(i, j int) bool {
+	return vh[i].Cost < vh[j].Cost
+}
+
+func (vh VillageHeap) Swap(i, j int) {
+	vh[i], vh[j] = vh[j], vh[i]
+}
+
+func (vh *VillageHeap) Push(newNode any) {
+	nv, ok := newNode.(Village)
+	if ok {
+		*vh = append(*vh, nv)
+	}
+}
+
+func (vh *VillageHeap) Pop() any {
+
+	if vh.IsEmpty() {
+		return nil
+	}
+
+	old := *vh
+	n := len(old)
+	elem := old[n-1]
+	*vh = old[0 : n-1]
+
+	return elem
+}
+
+func (vh VillageHeap) IsEmpty() bool {
+	return len(vh) == 0
+}
+
+type Village struct {
+	Name int
+	Cost int
 }
