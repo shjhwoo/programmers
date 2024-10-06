@@ -468,6 +468,7 @@ func (vh VillageHeap) Swap(i, j int) {
 	vh[i], vh[j] = vh[j], vh[i]
 }
 
+// cap - len 에 여유공간 부족한데 새 요초 추가하면 새로운 배열 생성되므로 포인터 메서드로 선언해야 한다
 func (vh *VillageHeap) Push(newNode any) {
 	nv, ok := newNode.(Village)
 	if ok {
@@ -496,4 +497,186 @@ func (vh VillageHeap) IsEmpty() bool {
 type Village struct {
 	Name int
 	Cost int
+}
+
+//직접 최소힙을 구현하기
+
+//힙은 배열
+
+type MyMinHeap []MyNode
+
+type MyNode struct {
+	Value int
+}
+
+func NewMyMinHeap() MyMinHeap {
+	return MyMinHeap{
+		{
+			Value: 0,
+		},
+	}
+}
+
+func (mmh *MyMinHeap) Len() int {
+	return len(*mmh)
+}
+
+func (mmh *MyMinHeap) Push(newNode MyNode) {
+
+	add := mmh
+	fmt.Println("주소: ", add)
+
+	*mmh = append(*mmh, newNode)
+
+	currentIdx := mmh.Len() - 1
+	parentIdx := currentIdx / 2
+
+	for parentIdx != 0 && (*mmh)[parentIdx].Value > newNode.Value {
+		temp := (*mmh)[parentIdx]
+		(*mmh)[parentIdx] = newNode
+		(*mmh)[currentIdx] = temp
+
+		currentIdx = parentIdx
+		parentIdx = currentIdx / 2
+	}
+}
+
+func (mmh *MyMinHeap) Pop() MyNode {
+	//뺄 값은 미리 복사를 해둔다
+	returnVal := (*mmh)[1]
+
+	//1번과 마지막 원소 자리를 바꾸기(뺄거를 맨 뒤로 해줘가지고 뺀다.) : 이렇게 해줘야 다음 뺄 값을 위로 올릴 수 있기 때문이다.
+	temp := (*mmh)[mmh.Len()-1]
+
+	//
+	if mmh.Len() <= 3 && returnVal.Value >= temp.Value {
+		returnVal = temp
+	} else {
+		(*mmh)[mmh.Len()-1] = (*mmh)[1]
+		(*mmh)[1] = temp
+	}
+
+	(*mmh) = (*mmh)[:mmh.Len()-1]
+
+	currentIdx := 1
+	leftIdx := 2
+	rightIdx := 3
+
+	//go에서 직접 구현한거는 인덱스 경계값 주의하기
+	for mmh.Len() > leftIdx && mmh.Len() > rightIdx && ((*mmh)[currentIdx].Value > (*mmh)[leftIdx].Value || (*mmh)[currentIdx].Value > (*mmh)[rightIdx].Value) {
+		if (*mmh)[leftIdx].Value > (*mmh)[rightIdx].Value {
+			temp := (*mmh)[currentIdx]
+			(*mmh)[currentIdx] = (*mmh)[rightIdx]
+			(*mmh)[rightIdx] = temp
+			currentIdx = rightIdx
+		} else {
+			temp := (*mmh)[currentIdx]
+			(*mmh)[currentIdx] = (*mmh)[leftIdx]
+			(*mmh)[leftIdx] = temp
+			currentIdx = leftIdx
+		}
+
+		leftIdx = currentIdx * 2
+		rightIdx = currentIdx*2 + 1
+	}
+
+	return returnVal
+
+}
+
+func TestMyMinHeap(t *testing.T) {
+
+	myHeap := NewMyMinHeap()
+
+	myHeap.Push(MyNode{
+		Value: 70,
+	})
+
+	myHeap.Push(MyNode{
+		Value: 11,
+	})
+
+	myHeap.Push(MyNode{
+		Value: 30,
+	})
+
+	myHeap.Push(MyNode{
+		Value: 50,
+	})
+
+	myHeap.Push(MyNode{
+		Value: 20,
+	})
+
+	myHeap.Push(MyNode{
+		Value: 89,
+	})
+
+	myHeap.Push(MyNode{
+		Value: 17,
+	})
+
+	myHeap.Push(MyNode{
+		Value: 26,
+	})
+
+	t.Logf("myHeap:: %v", myHeap)
+
+	t.Logf("myHeap 1st pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+
+	t.Logf("myHeap 2nd pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+
+	t.Logf("myHeap 3rd pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+
+	t.Logf("myHeap 4th pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+
+	t.Logf("myHeap 6th pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+
+	t.Logf("myHeap 7th pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+
+	t.Logf("myHeap 8th pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+
+	t.Logf("myHeap 9th pop: %v, heap status: %v", myHeap.Pop(), myHeap)
+}
+
+/*
+append: cap - len 여유 공간이 있다면 같은 주소값에 해당하는 배열을 변경
+그렇지 않고 공간이 모자라는 경우 cap을 2배(일반적으로는) 늘린 새로운 배열을 만든다.
+
+슬라이스의 슬라이싱:
+*/
+
+func SliceSlice() {
+	s1 := []int{1, 2, 3, 4, 5}
+	s2 := s1[1:3]
+
+	fmt.Println("s1:", s1, len(s1), cap(s1))
+	fmt.Println("s2:", s2, len(s2), cap(s2)) //cap = 배열의 총 길이 - 시작 인덱스 (5-1 = 4)
+
+	s1[2] = 1
+
+	fmt.Println("after change::")
+	fmt.Println("s1:", s1, len(s1), cap(s1))
+	fmt.Println("s2:", s2, len(s2), cap(s2))
+
+	s3 := make([]int, 10)
+	copy(s3, s1)
+
+	fmt.Println("s3", s3)
+
+	//불필요한 메모리 사용 안하도록, 아래와 같이 중간에 새로운 요소를 추가하는 방법이있다.
+	s4 := []int{1, 2, 3, 4, 5}
+	s4 = append(s4, 0)
+
+	copy(s4[2+1:], s4[2:])
+
+	fmt.Println("s4:", s4)
+
+	s4[2] = 100
+
+	fmt.Println("s4:", s4)
+}
+
+func TestSliceSlice(t *testing.T) {
+	SliceSlice()
 }
