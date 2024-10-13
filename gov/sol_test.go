@@ -1,90 +1,90 @@
 package main_test
 
 import (
-	"sort"
 	"testing"
 
 	"gotest.tools/v3/assert"
 )
 
-type Case struct {
-	n      int
-	costs  [][]int
-	expect int
+type TestCase struct {
+	gems   []string
+	expect []int
 }
 
 func TestSolution(t *testing.T) {
-	var tests = []Case{
+	var tests = []TestCase{
 		{
-			n: 4,
-			costs: [][]int{
-				{0, 1, 1},
-				{0, 2, 2},
-				{1, 2, 5}, //사이클 발생
-				{1, 3, 1},
-				{2, 3, 8},
-			},
-			expect: 4,
+			gems:   []string{"DIA", "RUBY", "RUBY", "DIA", "DIA", "EMERALD", "SAPPHIRE", "DIA"},
+			expect: []int{3, 7},
 		},
+		// {
+		// 	gems:   []string{"AA", "AB", "AC", "AA", "AC"},
+		// 	expect: []int{1, 3},
+		// },
+		// {
+		// 	gems:   []string{"XYZ", "XYZ", "XYZ"},
+		// 	expect: []int{1, 1},
+		// },
+		// {
+		// 	gems:   []string{"ZZZ", "YYY", "NNNN", "YYY", "BBB"},
+		// 	expect: []int{1, 5},
+		// },
 	}
 
 	for _, test := range tests {
-		assert.DeepEqual(t, test.expect, solution(test.n, test.costs))
+		assert.Equal(t, test.expect, solution(test.gems))
 	}
 }
 
-type Node struct {
-	Connection []int
-	IsCycle    bool
-}
+//진열된 모든 종류의 보석을
+//적어도 1개 이상 포함하는
+//가장 짧은 구간을 찾아서 구매
 
-func solution(n int, costs [][]int) int {
+func solution(gems []string) []int {
+	gems = append([]string{""}, gems...) //인덱스 헷갈리지 마라공..
 
-	///간선을 가중치 기준 오름차순 정렬. 그래야 최소를 계산가능
-	sort.Slice(costs, func(i, j int) bool {
-		return costs[i][2] < costs[j][2]
-	})
-
-	//부모 정보를 저장할 슬라이스선언.
-	var parentInfo []int
-	for i := 0; i < n; i++ {
-		parentInfo = append(parentInfo, i)
+	gemMap := make(map[string]bool)
+	for _, gem := range gems {
+		if gem == "" {
+			continue
+		}
+		gemMap[gem] = true
 	}
 
-	var answer int
-	for _, cost := range costs {
-		if !compare(parentInfo, cost[0], cost[1]) { //두 원소의 부모가 같으면 사이클
-			answer += cost[2] //같지 않은 경우에만 하나의 집합으로 만들수있다 (결국 하나의 부모로 귀결된다는 의미)
-			union(parentInfo, cost[0], cost[1])
+	startIdx := 1
+	endIdx := startIdx + len(gemMap) - 1
+
+	var candidates [][]int
+
+	for startIdx <= endIdx && endIdx < len(gems) {
+		shoppingList := gems[startIdx:endIdx]
+
+		if shopListHasAllKind(shoppingList, gemMap) {
+			candidates = append(candidates, []int{startIdx, endIdx})
+			startIdx++
+			endIdx = startIdx + len(gemMap) - 1
+			//배열도 바꿔줘야 한다
+
+		} else {
+			//인덱스를 이동하고 배열도 바꿔줘야 한다
 		}
 	}
 
-	return answer
+	return []int{}
 }
 
-func compare(parentInfo []int, start int, dest int) bool {
-	sp := findParent(start, parentInfo)
-	dp := findParent(dest, parentInfo)
+func shopListHasAllKind(shoppingList []string, gemMap map[string]bool) bool {
+	shopMap := make(map[string]bool)
 
-	return sp == dp
-}
-
-func union(parentInfo []int, start int, dest int) {
-	start = findParent(start, parentInfo)
-	dest = findParent(dest, parentInfo)
-
-	if start < dest {
-		parentInfo[dest] = start
-	} else {
-		parentInfo[start] = dest
-	}
-}
-
-func findParent(node int, parentInfo []int) int {
-	if parentInfo[node] == node {
-		return node
+	for _, shopGem := range shoppingList {
+		shopMap[shopGem] = true
 	}
 
-	parentInfo[node] = findParent(parentInfo[node], parentInfo)
-	return parentInfo[node]
+	for gem := range gemMap {
+		if !shopMap[gem] {
+			return false
+		}
+	}
+
+	return true
 }
