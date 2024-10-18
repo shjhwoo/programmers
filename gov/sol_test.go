@@ -59,6 +59,59 @@ func solution(n int) int {
 	return len(candidates)
 }
 
+func getQPosList(startPos []int, n int) [][]int {
+	//계속 반복하면서 탐색!!!
+	chessBoard := getChessBoard(n)
+
+	var result = [][]int{startPos}
+
+	queue := [][]int{startPos}
+
+	for len(queue) > 0 {
+
+		startRow := queue[0][0]
+		startCol := queue[0][1]
+		queue = queue[1:]
+
+		//빼낸 지점에서부터 탐색 가능한 다음의 지점들을 넣는다.
+
+		var firstFound bool
+		var getResult bool
+		for r, row := range chessBoard {
+			for c, col := range row {
+				if col == false {
+					continue
+				}
+
+				if r == startRow || c == startCol || isOnDiagnoalLine(startRow, startCol, r, c) { // 피해야 하는 조건을 명시한다
+					chessBoard[r][c] = false
+					continue
+				}
+
+				if !firstFound {
+					firstFound = true
+					result = append(result, []int{r, c})
+
+					if len(result) == n {
+						getResult = true
+						break
+					}
+				}
+
+				if len(queue) == 0 {
+					queue = append(queue, []int{r, c})
+				}
+			}
+
+			if getResult {
+				break
+			}
+		}
+	}
+
+	return result
+}
+
 func getChessBoard(n int) [][]bool {
 	var board [][]bool
 
@@ -74,39 +127,12 @@ func getChessBoard(n int) [][]bool {
 	return board
 }
 
-func getQPosList(startPos []int, n int) [][]int {
-	//계속 반복하면서 탐색!!!
-	chessBoard := getChessBoard(n)
+func isOnDiagnoalLine(startR, startC, curR, curC int) bool {
+	isNegativeD := float32(startR-curR)/float32(startC-curC) == float32(-1)
 
-	var result = [][]int{startPos}
+	isPositiveD := float32(startR-curR)/float32(startC-curC) == float32(1)
 
-	queue := [][]int{startPos}
-
-	for len(queue) > 0 {
-		startRow := queue[0][0]
-		startCol := queue[0][1]
-		queue = queue[1:]
-
-		//빼낸 지점에서부터 탐색 가능한 다음의 지점들을 넣는다.
-
-		for r, row := range chessBoard {
-			for c, col := range row {
-				if r == startRow || c == startCol { // 피해야 하는 조건을 명시한다
-					chessBoard[r][c] = false
-					continue
-				}
-
-				//대각선 지점인 경우도 피하기!!
-				if 같은대각선라인이면 {
-					chessBoard[r][c] = false
-					continue
-				}
-
-			}
-		}
-	}
-
-	return result
+	return isNegativeD || isPositiveD
 }
 
 func makePosKey(qPosList [][]int) string {
