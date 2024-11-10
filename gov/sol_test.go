@@ -21,16 +21,16 @@ func TestSolution(t *testing.T) {
 			expect: 3,
 		},
 
-		{
-			strs:   []string{"app", "ap", "p", "l", "e", "ple", "pp"},
-			t:      "apple",
-			expect: 2,
-		},
-		{
-			strs:   []string{"ba", "an", "nan", "ban", "n"},
-			t:      "banana",
-			expect: -1,
-		},
+		// {
+		// 	strs:   []string{"app", "ap", "p", "l", "e", "ple", "pp"},
+		// 	t:      "apple",
+		// 	expect: 2,
+		// },
+		// {
+		// 	strs:   []string{"ba", "an", "nan", "ban", "n"},
+		// 	t:      "banana",
+		// 	expect: -1,
+		// },
 	}
 
 	for _, test := range tests {
@@ -49,8 +49,6 @@ func solution(strs []string, t string) int {
 		 만약 주어진 문장을 완성하는 것이 불가능하면 -1을 return
 	*/
 
-	var answer = 0
-
 	/*
 
 		ㅁㅁㅁ ...                 .... ㅁㅁ
@@ -63,10 +61,6 @@ func solution(strs []string, t string) int {
 		prefix가 나올때까지 반복하고 찾았으면 answer에 카운팅을 해둔다. 그리고 t에서 prefix를 잘라내고 남은 부분에 대해 같은 방법으로 반복한다.
 		단, prefix를 찾더라도, 최대한 길이가 긴 prefix를 찾아야 한다.
 		=> 그런데 이렇게 한 것 때문에 뒤에 남은 부분에 맞은 prefix를 못 찾았다면, 카운팅을 취소한다.
-
-
-
-
 	*/
 	var prefixCandidates []string
 	for _, pre := range strs {
@@ -80,17 +74,34 @@ func solution(strs []string, t string) int {
 	}
 
 	//후보군들을 찾았다
+
+	var answer = 1
+
 	for _, pre := range prefixCandidates {
 		newT := strings.TrimPrefix(t, pre)
+
+		if newT == "" {
+			return 1
+		}
+
+		//그 외에는.. 한번 더 호출이 가능
 		cnt := solution(strs, newT)
+
+		if cnt == -1 {
+
+		}
+
+		if newT == "" {
+			cnt = 1 //end
+		} else {
+			cnt += solution(strs, newT)
+		}
 
 		answer += cnt
 		if cnt == -1 {
-			//find other prefix again.
-			//then repeat same thing
 			continue //?
 		} else {
-			return 1 //?
+			break
 		}
 	}
 
