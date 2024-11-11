@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"sort"
 	"strings"
 	"testing"
 
@@ -15,17 +16,16 @@ type TestCase struct {
 
 func TestSolution(t *testing.T) {
 	var tests = []TestCase{
-		{
-			strs:   []string{"ba", "na", "n", "a"},
-			t:      "banana",
-			expect: 3,
-		},
-
 		// {
-		// 	strs:   []string{"app", "ap", "p", "l", "e", "ple", "pp"},
-		// 	t:      "apple",
-		// 	expect: 2,
+		// 	strs:   []string{"ba", "na", "n", "a"},
+		// 	t:      "banana",
+		// 	expect: 3,
 		// },
+		{
+			strs:   []string{"app", "ap", "p", "l", "e", "ple", "pp"},
+			t:      "apple",
+			expect: 2,
+		},
 		// {
 		// 	strs:   []string{"ba", "an", "nan", "ban", "n"},
 		// 	t:      "banana",
@@ -75,7 +75,11 @@ func solution(strs []string, t string) int {
 
 	//후보군들을 찾았다
 
-	var answer = 1
+	sort.Slice(prefixCandidates, func(i, j int) bool {
+		return len(prefixCandidates[i]) > len(prefixCandidates[j])
+	})
+
+	var answer = 0
 
 	for _, pre := range prefixCandidates {
 		newT := strings.TrimPrefix(t, pre)
@@ -88,21 +92,11 @@ func solution(strs []string, t string) int {
 		cnt := solution(strs, newT)
 
 		if cnt == -1 {
-
+			continue
 		}
 
-		if newT == "" {
-			cnt = 1 //end
-		} else {
-			cnt += solution(strs, newT)
-		}
-
-		answer += cnt
-		if cnt == -1 {
-			continue //?
-		} else {
-			break
-		}
+		answer += cnt + 1
+		break
 	}
 
 	return answer
