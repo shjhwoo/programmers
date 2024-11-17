@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"fmt"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -36,34 +37,34 @@ func TestSolution(t *testing.T) {
 	}
 }
 
+var cache = make(map[string]int)
+
 func solution(strs []string, t string) int {
-	var preMap = make(map[string]bool)
 
-	for _, pre := range strs {
-		preMap[pre] = true
+	var strsMap = make(map[string]bool)
+	for _, str := range strs {
+		strsMap[str] = true
 	}
 
-	var memoMap []int
+	for i := 0; i < len(t); i++ {
 
-	for j := 0; j < len(t)+1; j++ {
-		memoMap = append(memoMap, 0)
-	}
+		start := 0
+		end := i + 1
+		subT := t[start:end]
 
-	//제일 작은 문제부터 정의한다.
-	for i := 1; i < len(t); i++ {
-		//제일 작은 문제는 i == 1일때.
-		subWord := t[0:i] //단어 ba 
+		//subT에 대해서 나누어 쪼개어 생각
+		for j := 1; j < end+1; j++ {
+			left := subT[0:j]
+			right := subT[j:]
 
-		for j := i-1; j >= 0; j-- {}
-		s2 := t[0:i-j] //이전의 작은 문제 b 
-		if 
-
-		if preMap[subWord] {
-			//기억해둔다.
-			memoMap[i] = 1 //?
-		} else {
-			//없는 경우. -1
-			memoMap[i] = -1 //?
+			fmt.Println("left: ", left, "right: ", right)
+			//단 안 되었던 조합은 continue 해야 한다
+			if !strsMap[left] {
+				continue
+			} else {
+				//있는경우: 되었던 조합을 캐시에서 찾기
+				cache[subT] = cache[left] + cache[right]
+			}
 		}
 	}
 
